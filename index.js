@@ -38,7 +38,7 @@ let longChatCache = new LRUCache({
 });
 
 function hideNode(msgNode) {
-    let animOpt = {duration: 500, fill: "forwards"};
+    let animOpt = { duration: 500, fill: "forwards" };
     new Promise((resolutionFunc, rejectionFunc) => {
         msgNode.style.color = "#ff0000";
         let anim = msgNode.animate([
@@ -95,10 +95,10 @@ function evaluateMessage(combinedMessage, msgNode) {
 document.arrive(CHAT_SEL, (chatNode) => {
     console.log('Sane chat cleanup is enabled.');
     chatNode.arrive(CHAT_LINE_SEL, (msgNode) => {
-        let xpathResult = document.evaluate('child::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]' 
-            + ' | child::div[contains(@class,"chat-line__message--emote-button")]/span/img'
-            + ' | child::a[contains(@class,"link-fragment")]',
-            msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null );
+        let xpathResult = document.evaluate('descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]'
+            + ' | descendant::div[contains(@class,"chat-line__message--emote-button")]/span/img'
+            + ' | descendant::a[contains(@class,"link-fragment")]',
+            msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
         let node;
         let fragments = [];
         while (node = xpathResult.iterateNext()) {
