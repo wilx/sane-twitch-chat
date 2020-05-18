@@ -39,7 +39,7 @@ const longChatCache = new LRUCache({
 
 function hideNode (msgNode) {
     const animOpt = { duration: 500, fill: 'forwards' };
-    Promise((resolutionFunc, rejectionFunc) => {
+    return new Promise((resolve, reject) => {
         msgNode.style.color = '#ff0000';
         const anim = msgNode.animate([
             {
@@ -53,7 +53,7 @@ function hideNode (msgNode) {
         anim.pause();
         anim.onfinish = () => { msgNode.style.display = 'none'; };
         anim.play();
-        resolutionFunc(true);
+        resolve(true);
     });
 }
 
