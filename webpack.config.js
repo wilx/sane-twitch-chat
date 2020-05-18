@@ -50,7 +50,7 @@ module.exports = {
     new WebpackUserscript({
       headers: {
         name: '[name]',
-        version: '[version]-build.[buildNo]',
+        version: '[version]',
         author: 'wilx',
         homepage: 'https://github.com/wilx/sane-twitch-chat',
         namespace: 'https://github.com/wilx/sane-twitch-chat',

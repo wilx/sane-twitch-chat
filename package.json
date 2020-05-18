@@ -1,6 +1,6 @@
 {
   "name": "sane-twitch-chat",
-  "version": "0.1",
+  "version": "1",
   "description": "Twitch chat sanitizer.",
   "author": "wilx",
   "homepage": "https://github.com/wilx/sane-twitch-chat",
