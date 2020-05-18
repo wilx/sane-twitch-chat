@@ -1,5 +1,5 @@
-let Arrive = require("arrive");
-import LRUCache from "lru-cache";
+import LRUCache from 'lru-cache';
+import 'arrive';
 
 /**
  * This determines timeout of how long will fast chat cache keep recent messages.
@@ -21,27 +21,27 @@ const LONG_CHAT_THRESHOLD_LENGTH = 150;
 
 console.log('Starting Sane chat cleanup');
 
-const CHAT_SEL = ".chat-list__list-container, .chat-scrollable-area__message-container";
-const CHAT_LINE_SEL = ".chat-line__message";
+const CHAT_SEL = '.chat-list__list-container, .chat-scrollable-area__message-container';
+const CHAT_LINE_SEL = '.chat-line__message';
 const SPACE_NORM_RE = /([\s])[\s]+/gu;
 
-let prevMessage = undefined;
-let fastChatCache = new LRUCache({
+let prevMessage;
+const fastChatCache = new LRUCache({
     max: FAST_CHAT_CACHE_SIZE,
     maxAge: FAST_CHAT_CACHE_TIMEOUT,
     length: () => 1
 });
-let longChatCache = new LRUCache({
+const longChatCache = new LRUCache({
     max: LONG_CHAT_CACHE_SIZE,
     maxAge: LONG_CHAT_CACHE_TIMEOUT,
     length: () => 1
 });
 
-function hideNode(msgNode) {
-    let animOpt = { duration: 500, fill: "forwards" };
-    new Promise((resolutionFunc, rejectionFunc) => {
-        msgNode.style.color = "#ff0000";
-        let anim = msgNode.animate([
+function hideNode (msgNode) {
+    const animOpt = { duration: 500, fill: 'forwards' };
+    Promise((resolutionFunc, rejectionFunc) => {
+        msgNode.style.color = '#ff0000';
+        const anim = msgNode.animate([
             {
                 opacity: '1'
             },
@@ -51,20 +51,20 @@ function hideNode(msgNode) {
             }
         ], animOpt);
         anim.pause();
-        anim.onfinish = () => { msgNode.style.display = "none"; };
+        anim.onfinish = () => { msgNode.style.display = 'none'; };
         anim.play();
         resolutionFunc(true);
     });
 }
 
-function evaluateMessage(combinedMessage, msgNode) {
+function evaluateMessage (combinedMessage, msgNode) {
     if (!combinedMessage) {
         return;
     }
 
     // Filter repeated messages.
     if (combinedMessage === prevMessage) {
-        console.log("Hiding repeated message: " + combinedMessage);
+        console.log('Hiding repeated message: ' + combinedMessage);
         hideNode(msgNode);
         return;
     }
@@ -72,19 +72,19 @@ function evaluateMessage(combinedMessage, msgNode) {
 
     // Filter chat messages which repeat the same text in very short time.
     // See FAST_CHAT_CACHE_TIMEOUT.
-    let factCachedNode = fastChatCache.get(combinedMessage);
+    const factCachedNode = fastChatCache.get(combinedMessage);
     if (factCachedNode !== undefined) {
-        console.log("Hiding message present in fast chat cache: " + combinedMessage);
-        hideNode(msgNode)
+        console.log('Hiding message present in fast chat cache: ' + combinedMessage);
+        hideNode(msgNode);
         return;
     }
     fastChatCache.set(combinedMessage, msgNode);
 
     // Filter long chat messages which repeat within longer period of time.
     if (combinedMessage.length >= LONG_CHAT_THRESHOLD_LENGTH) {
-        let longCachedNode = longChatCache.get(combinedMessage);
+        const longCachedNode = longChatCache.get(combinedMessage);
         if (longCachedNode !== undefined) {
-            console.log("Hiding long message / copy-pasta present in long chat cache: " + combinedMessage);
+            console.log('Hiding long message / copy-pasta present in long chat cache: ' + combinedMessage);
             hideNode(msgNode);
             return;
         }
@@ -95,25 +95,23 @@ function evaluateMessage(combinedMessage, msgNode) {
 document.arrive(CHAT_SEL, (chatNode) => {
     console.log('Sane chat cleanup is enabled.');
     chatNode.arrive(CHAT_LINE_SEL, (msgNode) => {
-        let xpathResult = document.evaluate('descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]'
-            + ' | descendant::div[contains(@class,"chat-line__message--emote-button")]/span/img'
-            + ' | descendant::a[contains(@class,"link-fragment")]',
-            msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+        const xpathResult = document.evaluate(('descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]'
+                + ' | descendant::div[contains(@class,"chat-line__message--emote-button")]/span/img'
+                + ' | descendant::a[contains(@class,"link-fragment")]'), msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
         let node;
-        let fragments = [];
-        while (node = xpathResult.iterateNext()) {
-            if (node.nodeName === "IMG") {
-                let alt = node.getAttribute("alt");
+        const fragments = [];
+        while ((node = xpathResult.iterateNext())) {
+            if (node.nodeName === 'IMG') {
+                const alt = node.getAttribute('alt');
                 if (alt) {
-                    fragments.push(alt)
+                    fragments.push(alt);
                 }
-            }
-            else {
+            } else {
                 fragments.push(node.textContent);
             }
         }
-        let combinedMessage = fragments.join(" ").trim().replace(SPACE_NORM_RE, "$1");
-        console.log("combined message: " + combinedMessage);
+        const combinedMessage = fragments.join(' ').trim().replace(SPACE_NORM_RE, '$1');
+        console.log('combined message: ' + combinedMessage);
         evaluateMessage(combinedMessage, msgNode);
     });
 });
