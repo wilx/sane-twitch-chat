@@ -1,13 +1,29 @@
 let Arrive = require("arrive");
 import LRUCache from "lru-cache";
 
+/**
+ * This determines timeout of how long will fast chat cache keep recent messages.
+ * The default is 1.5 seconds. This defends against all the LULW and Pog avalanches
+ * that sometimes happen in large Twitch channel chats.
+ */
+const FAST_CHAT_CACHE_TIMEOUT = 1500;
+const FAST_CHAT_CACHE_SIZE = 50;
+
+/**
+ * This determines timeout of how long will long messages / copy-pastas be kept in cache.
+ */
+const LONG_CHAT_CACHE_TIMEOUT = 30 * 1000;
+const LONG_CHAT_CACHE_SIZE = 10;
+/**
+ * This determines what is considered a long message / copy-pasta.
+ */
+const LONG_CHAT_THRESHOLD_LENGTH = 150;
+
 console.log('Starting Sane chat cleanup');
 
 const CHAT_SEL = ".chat-list__list-container, .chat-scrollable-area__message-container";
 const CHAT_LINE_SEL = ".chat-line__message";
 const SPACE_NORM_RE = /([\s])[\s]+/gu;
-const FAST_CHAT_CACHE_TIMEOUT = 1500;
-const FAST_CHAT_CACHE_SIZE = 30;
 
 let prevMessage = undefined;
 let fastChatCache = new LRUCache({
@@ -15,11 +31,13 @@ let fastChatCache = new LRUCache({
     maxAge: FAST_CHAT_CACHE_TIMEOUT,
     length: () => 1
 });
+let longChatCache = new LRUCache({
+    max: LONG_CHAT_CACHE_SIZE,
+    maxAge: LONG_CHAT_CACHE_TIMEOUT,
+    length: () => 1
+});
 
 function hideNode(msgNode) {
-    //msgNode.style.display = "none";
-    //msgNode.style.color = "#ff0000";
-    //let removeAnim = msgNode.animate([{display: 'none';}], {duration: 500});
     let animOpt = {duration: 500, fill: "forwards"};
     new Promise((resolutionFunc, rejectionFunc) => {
         msgNode.style.color = "#ff0000";
@@ -28,7 +46,7 @@ function hideNode(msgNode) {
                 opacity: '1'
             },
             {
-                opacity : '0',
+                opacity: '0',
                 height: '0'
             }
         ], animOpt);
@@ -36,9 +54,6 @@ function hideNode(msgNode) {
         anim.onfinish = () => { msgNode.style.display = "none"; };
         anim.play();
         resolutionFunc(true);
-    }).then((x) => {
-        //msgNode.style.display = 'none';
-        //console.log("Animation finished.");
     });
 }
 
@@ -47,6 +62,7 @@ function evaluateMessage(combinedMessage, msgNode) {
         return;
     }
 
+    // Filter repeated messages.
     if (combinedMessage === prevMessage) {
         console.log("Hiding repeated message: " + combinedMessage);
         hideNode(msgNode);
@@ -54,6 +70,8 @@ function evaluateMessage(combinedMessage, msgNode) {
     }
     prevMessage = combinedMessage;
 
+    // Filter chat messages which repeat the same text in very short time.
+    // See FAST_CHAT_CACHE_TIMEOUT.
     let factCachedNode = fastChatCache.get(combinedMessage);
     if (factCachedNode !== undefined) {
         console.log("Hiding message present in fast chat cache: " + combinedMessage);
@@ -61,6 +79,17 @@ function evaluateMessage(combinedMessage, msgNode) {
         return;
     }
     fastChatCache.set(combinedMessage, msgNode);
+
+    // Filter long chat messages which repeat within longer period of time.
+    if (combinedMessage.length >= LONG_CHAT_THRESHOLD_LENGTH) {
+        let longCachedNode = longChatCache.get(combinedMessage);
+        if (longCachedNode !== undefined) {
+            console.log("Hiding long message / copy-pasta present in long chat cache: " + combinedMessage);
+            hideNode(msgNode);
+            return;
+        }
+        longChatCache.set(combinedMessage, msgNode);
+    }
 }
 
 document.arrive(CHAT_SEL, (chatNode) => {
