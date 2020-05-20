@@ -1,10 +1,11 @@
 const path = require('path');
 const WebpackUserscript = require('webpack-userscript');
+const JsDocPlugin = require('jsdoc-webpack-plugin');
 
 module.exports = {
     mode: 'production',
     entry: {
-        'sane-twitch-chat': path.join(__dirname, 'index.js')
+        'sane-twitch-chat': path.join(__dirname, 'src', 'index.js')
     },
     output: {
         path: path.resolve(__dirname, 'output'),
@@ -59,6 +60,9 @@ module.exports = {
                 grant: 'none'
             },
             pretty: true
+        }),
+        new JsDocPlugin({
+            conf: path.join(__dirname, 'jsdoc.conf.json')
         })
     ],
     resolve: {
