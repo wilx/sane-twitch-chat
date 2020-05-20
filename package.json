@@ -3,10 +3,19 @@
   "version": "1",
   "description": "Twitch chat sanitizer.",
   "author": "wilx",
+  "license": "BSD-2-Clause",
   "homepage": "https://github.com/wilx/sane-twitch-chat",
   "bugs": {
     "url": "https://github.com/wilx/sane-twitch-chat/issues"
   },
+  "keywords": [
+    "twitch.tv",
+    "twitch",
+    "chat",
+    "userscript",
+    "tampermonkey",
+    "greasemonkey"
+  ],
   "dependencies": {
     "arrive": "^2.4.1",
     "babel-loader": "^8.1.0",
@@ -35,5 +44,8 @@
     "Firefox ESR",
     "Chrome >= 80",
     "Safari >= 12"
-]
+  ],
+  "scripts": {
+    "build": "webpack"
+  }
 }
