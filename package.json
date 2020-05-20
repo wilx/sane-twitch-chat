@@ -30,5 +30,10 @@
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.11",
     "webpack-userscript": "^2.5.3"
-  }
+  },
+  "browserslist": [
+    "Firefox ESR",
+    "Chrome >= 80",
+    "Safari >= 12"
+]
 }

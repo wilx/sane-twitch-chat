@@ -25,13 +25,7 @@ module.exports = {
                                 {
                                     debug: true,
                                     useBuiltIns: 'usage',
-                                    corejs: '3',
-                                    targets: {
-                                        browsers: [
-                                            'last 2 chrome version',
-                                            'last 2 firefox version'
-                                        ]
-                                    }
+                                    corejs: '3'
                                 }
                             ]
                         ]
