@@ -41,16 +41,20 @@ function hideNode (msgNode) {
     const animOpt = { duration: 500, fill: 'forwards' };
     return new Promise((resolve, reject) => {
         msgNode.style.color = '#ff0000';
-        const anim = msgNode.animate([
-            {
-                opacity: '1'
-            },
-            {
-                opacity: '0',
-                height: '0'
-            }
-        ], animOpt);
-        anim.pause();
+        const animEffects = new KeyframeEffect(
+            msgNode,
+            [
+                {
+                    opacity: '1'
+                },
+                {
+                    opacity: '0',
+                    height: '0'
+                }
+            ],
+            animOpt
+        );
+        const anim = new Animation(animEffects, document.timeline);
         anim.onfinish = () => { msgNode.style.display = 'none'; };
         anim.play();
         resolve(true);
