@@ -2,11 +2,14 @@
   "name": "sane-twitch-chat",
   "version": "1",
   "description": "Twitch chat sanitizer.",
-  "author": "wilx",
   "license": "BSD-2-Clause",
   "homepage": "https://github.com/wilx/sane-twitch-chat",
   "bugs": {
     "url": "https://github.com/wilx/sane-twitch-chat/issues"
+  },
+  "author": {
+    "name": "Václav Haisman",
+    "email": "vhaisman+sane-twitch-chat@gmail.com"
   },
   "keywords": [
     "twitch.tv",
