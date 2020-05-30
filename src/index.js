@@ -6,14 +6,20 @@ import 'arrive';
  * The default is 1.5 seconds. This defends against all the LULW and Pog avalanches
  * that sometimes happen in large Twitch channel chats.
  */
-const FAST_CHAT_CACHE_TIMEOUT = 1500;
-const FAST_CHAT_CACHE_SIZE = 50;
+const FAST_CHAT_CACHE_TIMEOUT = 2500;
+/**
+ * Unlimitted cache size for fast messages.
+ */
+const FAST_CHAT_CACHE_SIZE = 0;
 
 /**
  * This determines timeout of how long will long messages / copy-pastas be kept in cache.
  */
-const LONG_CHAT_CACHE_TIMEOUT = 30 * 1000;
-const LONG_CHAT_CACHE_SIZE = 10;
+const LONG_CHAT_CACHE_TIMEOUT = 60 * 1000;
+/**
+ * Unlimitted cache size for long messages.
+ */
+const LONG_CHAT_CACHE_SIZE = 0;
 /**
  * This determines what is considered a long message / copy-pasta.
  */

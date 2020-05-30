@@ -44,13 +44,19 @@
     "webpack-userscript": "^2.5.3",
     "yarn-audit-html": "^1.2.3"
   },
-  "browserslist": [
-    "Firefox ESR",
-    "Chrome >= 80",
-    "Safari >= 12"
-  ],
+  "browserslist": {
+    "production": [
+      "Firefox >= 74",
+      "Chrome >= 81"
+    ],
+    "compat": [
+      "Firefox ESR",
+      "Chrome >= 80",
+      "Safari >= 12"
+    ]
+  },
   "scripts": {
-    "build": "webpack",
+    "build": "webpack && yarn audit-html",
     "audit-html": "yarn audit --group \"dependencies bundledDependencies\" --json | yarn-audit-html -o output/sane-twitch-chat.audit.html"
   }
 }
