@@ -57,6 +57,7 @@
   },
   "scripts": {
     "build": "webpack && yarn audit-html",
+    "build-compat": "BROWSERSLIST_ENV=compat yarn build",
     "audit-html": "yarn audit --group \"dependencies bundledDependencies\" --json | yarn-audit-html -o output/sane-twitch-chat.audit.html"
   }
 }
