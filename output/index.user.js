@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.2
+// @version     1.0.17
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -991,7 +991,7 @@ function hideNode(msgNode) {
     duration: 500,
     fill: 'forwards'
   };
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     msgNode.style.color = '#ff0000';
     const animEffects = new KeyframeEffect(msgNode, [{
       opacity: '1'
