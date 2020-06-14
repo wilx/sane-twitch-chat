@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.47
+// @version     1.0.52
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -985,20 +985,21 @@ const longChatCache = new lru_cache__WEBPACK_IMPORTED_MODULE_1___default.a({
   maxAge: LONG_CHAT_CACHE_TIMEOUT,
   length: () => 1
 });
+const HIDE_MESSAGE_KEYFRAMES = [{
+  opacity: '1'
+}, {
+  opacity: '0',
+  height: '0'
+}];
+const HIDE_MESSAGE_ANIM_OPTS = {
+  duration: 500,
+  fill: 'forwards'
+};
 
 function hideNode(msgNode) {
-  const animOpt = {
-    duration: 500,
-    fill: 'forwards'
-  };
   return new Promise(resolve => {
     msgNode.style.color = '#ff0000';
-    const animEffects = new KeyframeEffect(msgNode, [{
-      opacity: '1'
-    }, {
-      opacity: '0',
-      height: '0'
-    }], animOpt);
+    const animEffects = new KeyframeEffect(msgNode, HIDE_MESSAGE_KEYFRAMES, HIDE_MESSAGE_ANIM_OPTS);
     const anim = new Animation(animEffects, document.timeline);
 
     anim.onfinish = () => {

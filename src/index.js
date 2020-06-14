@@ -43,22 +43,25 @@ const longChatCache = new LRUCache({
     length: () => 1
 });
 
+const HIDE_MESSAGE_KEYFRAMES = [
+    {
+        opacity: '1'
+    },
+    {
+        opacity: '0',
+        height: '0'
+    }
+];
+
+const HIDE_MESSAGE_ANIM_OPTS = { duration: 500, fill: 'forwards' };
+
 function hideNode (msgNode) {
-    const animOpt = { duration: 500, fill: 'forwards' };
     return new Promise((resolve, reject) => {
         msgNode.style.color = '#ff0000';
         const animEffects = new KeyframeEffect(
             msgNode,
-            [
-                {
-                    opacity: '1'
-                },
-                {
-                    opacity: '0',
-                    height: '0'
-                }
-            ],
-            animOpt
+            HIDE_MESSAGE_KEYFRAMES,
+            HIDE_MESSAGE_ANIM_OPTS
         );
         const anim = new Animation(animEffects, document.timeline);
         anim.onfinish = () => { msgNode.style.display = 'none'; };
