@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.72
+// @version     1.0.73
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -2316,7 +2316,7 @@ Yallist.prototype.sliceReverse = function (from, to) {
   return ret
 }
 
-Yallist.prototype.splice = function (start, deleteCount /*, ...nodes */) {
+Yallist.prototype.splice = function (start, deleteCount, ...nodes) {
   if (start > this.length) {
     start = this.length - 1
   }
@@ -2341,8 +2341,8 @@ Yallist.prototype.splice = function (start, deleteCount /*, ...nodes */) {
     walker = walker.prev
   }
 
-  for (var i = 2; i < arguments.length; i++) {
-    walker = insert(this, walker, arguments[i])
+  for (var i = 0; i < nodes.length; i++) {
+    walker = insert(this, walker, nodes[i])
   }
   return ret;
 }
