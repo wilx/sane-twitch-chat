@@ -47,8 +47,8 @@
   },
   "browserslist": {
     "production": [
-      "Firefox >= 78",
-      "Chrome >= 83"
+      "Firefox >= 79",
+      "Chrome >= 84"
     ],
     "compat": [
       "Firefox ESR",
