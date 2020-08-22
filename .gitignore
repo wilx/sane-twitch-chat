@@ -2,3 +2,5 @@ output/
 node_modules/
 docs/
 yarn-error.log
+.yarn/
+.idea/
