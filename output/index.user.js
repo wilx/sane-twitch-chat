@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.90
+// @version     1.0.96
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
