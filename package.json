@@ -1,6 +1,6 @@
 {
   "name": "sane-twitch-chat",
-  "version": "1.0.96",
+  "version": "1.0.97",
   "description": "Twitch chat sanitizer.",
   "license": "BSD-2-Clause",
   "homepage": "https://github.com/wilx/sane-twitch-chat",
@@ -32,6 +32,7 @@
     "@webpack-cli/migrate": "^0.1.9",
     "babel-loader": "^8.1.0",
     "babel-plugin-minify-dead-code-elimination": "^0.5.1",
+    "chokidar": "^3.4.2",
     "eslint": "^7.7.0",
     "eslint-config-standard": "^14.1.1",
     "eslint-plugin-import": "^2.22.0",
@@ -50,8 +51,8 @@
   },
   "browserslist": {
     "production": [
-      "Firefox >= 79",
-      "Chrome >= 84"
+      "Firefox >= 80",
+      "Chrome >= 85"
     ],
     "compat": [
       "Firefox ESR",
