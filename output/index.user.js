@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.109
+// @version     1.0.111
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -974,6 +974,7 @@ console.log('Starting Sane chat cleanup');
 const CHAT_SEL = '.chat-list__list-container, .chat-scrollable-area__message-container';
 const CHAT_LINE_SEL = '.chat-line__message';
 const SPACE_NORM_RE = /([\s])[\s]+/gu;
+const BRAILLE_RE = /^[\u{2800}-\u{28FF}]+$/u;
 let prevMessage;
 const fastChatCache = new lru_cache__WEBPACK_IMPORTED_MODULE_1___default.a({
   max: FAST_CHAT_CACHE_SIZE,
@@ -1023,8 +1024,15 @@ function evaluateMessage(combinedMessage, msgNode) {
     return;
   }
 
-  prevMessage = combinedMessage; // Filter chat messages which repeat the same text in very short time.
+  prevMessage = combinedMessage; // Filter messages with Braille symbols only.
+
+  if (BRAILLE_RE.test(combinedMessage)) {
+    console.log('Hiding Braille only message: ' + combinedMessage);
+    hideNode(msgNode);
+    return;
+  } // Filter chat messages which repeat the same text in very short time.
   // See FAST_CHAT_CACHE_TIMEOUT.
+
 
   const factCachedNode = fastChatCache.get(combinedMessage);
 
