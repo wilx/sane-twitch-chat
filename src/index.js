@@ -1,5 +1,6 @@
 import LRUCache from 'lru-cache';
 import 'arrive';
+import GraphemeSplitter from 'grapheme-splitter';
 
 /**
  * This determines timeout of how long will fast chat cache keep recent messages.
@@ -56,6 +57,8 @@ const HIDE_MESSAGE_KEYFRAMES = [
 
 const HIDE_MESSAGE_ANIM_OPTS = { duration: 500, fill: 'forwards' };
 
+const SPLITTER = new GraphemeSplitter();
+
 function hideNode (msgNode) {
     return new Promise((resolve, reject) => {
         msgNode.style.color = '#ff0000';
@@ -102,7 +105,8 @@ function evaluateMessage (combinedMessage, msgNode) {
     fastChatCache.set(combinedMessage, msgNode);
 
     // Filter long chat messages which repeat within longer period of time.
-    if (combinedMessage.length >= LONG_CHAT_THRESHOLD_LENGTH) {
+    const combinedMessageLength = SPLITTER.countGraphemes(combinedMessage);
+    if (combinedMessageLength >= LONG_CHAT_THRESHOLD_LENGTH) {
         const longCachedNode = longChatCache.get(combinedMessage);
         if (longCachedNode !== undefined) {
             console.log('Hiding long message / copy-pasta present in long chat cache: ' + combinedMessage);
