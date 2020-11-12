@@ -1,6 +1,6 @@
 import LRUCache from 'lru-cache';
 import 'arrive';
-import GraphemeSplitter from 'grapheme-splitter';
+import Graphemer from 'graphemer';
 
 /**
  * This determines timeout of how long will fast chat cache keep recent messages.
@@ -57,7 +57,7 @@ const HIDE_MESSAGE_KEYFRAMES = [
 
 const HIDE_MESSAGE_ANIM_OPTS = { duration: 500, fill: 'forwards' };
 
-const SPLITTER = new GraphemeSplitter();
+const SPLITTER = new Graphemer();
 
 function hideNode (msgNode) {
     return new Promise((resolve, reject) => {
