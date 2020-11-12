@@ -120,9 +120,11 @@ function evaluateMessage (combinedMessage, msgNode) {
 document.arrive(CHAT_SEL, (chatNode) => {
     console.log('Sane chat cleanup is enabled.');
     chatNode.arrive(CHAT_LINE_SEL, (msgNode) => {
-        const xpathResult = document.evaluate(('descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]'
-                + ' | descendant::div[contains(@class,"chat-line__message--emote-button")]/span//img'
-                + ' | descendant::a[contains(@class,"link-fragment")]'), msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+        const xpathResult = document.evaluate(('descendant::div[contains(@class,"chat-line__message--emote-button")]/span//img'
+                + ' | descendant::a[contains(@class,"link-fragment")]'
+                + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]//div[contains(@class,"bttv-emote")]/img'
+                + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]'),
+        msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
         let node;
         const fragments = [];
         while ((node = xpathResult.iterateNext())) {
