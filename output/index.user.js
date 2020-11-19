@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.150
+// @version     1.0.153
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -3608,44 +3608,11 @@ try {
 /******/ 	}
 /******/ 	
 /************************************************************************/
-/******/ 	/* webpack/runtime/compat get default export */
-/******/ 	(() => {
-/******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__webpack_require__.n = (module) => {
-/******/ 			var getter = module && module.__esModule ?
-/******/ 				() => module['default'] :
-/******/ 				() => module;
-/******/ 			__webpack_require__.d(getter, { a: getter });
-/******/ 			return getter;
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/define property getters */
-/******/ 	(() => {
-/******/ 		// define getter functions for harmony exports
-/******/ 		__webpack_require__.d = (exports, definition) => {
-/******/ 			for(var key in definition) {
-/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 				}
-/******/ 			}
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	(() => {
-/******/ 		__webpack_require__.o = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop)
-/******/ 	})();
-/******/ 	
-/************************************************************************/
 (() => {
 "use strict";
 /* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(593);
-/* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(lru_cache__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(640);
-/* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(arrive__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(777);
-/* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(graphemer__WEBPACK_IMPORTED_MODULE_2__);
 
 
 
@@ -3682,12 +3649,12 @@ const CHAT_LINE_SEL = '.chat-line__message';
 const SPACE_NORM_RE = /([\s])[\s]+/gu;
 const BRAILLE_RE = /^[\u{2800}-\u{28FF}]+$/u;
 let prevMessage;
-const fastChatCache = new (lru_cache__WEBPACK_IMPORTED_MODULE_0___default())({
+const fastChatCache = new lru_cache__WEBPACK_IMPORTED_MODULE_0__({
   max: FAST_CHAT_CACHE_SIZE,
   maxAge: FAST_CHAT_CACHE_TIMEOUT,
   length: () => 1
 });
-const longChatCache = new (lru_cache__WEBPACK_IMPORTED_MODULE_0___default())({
+const longChatCache = new lru_cache__WEBPACK_IMPORTED_MODULE_0__({
   max: LONG_CHAT_CACHE_SIZE,
   maxAge: LONG_CHAT_CACHE_TIMEOUT,
   length: () => 1
@@ -3702,7 +3669,7 @@ const HIDE_MESSAGE_ANIM_OPTS = {
   duration: 500,
   fill: 'forwards'
 };
-const SPLITTER = new (graphemer__WEBPACK_IMPORTED_MODULE_2___default())();
+const SPLITTER = new graphemer__WEBPACK_IMPORTED_MODULE_2__();
 
 function hideNode(msgNode) {
   return new Promise(resolve => {
