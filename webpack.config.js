@@ -5,7 +5,7 @@ const JsDocPlugin = require('jsdoc-webpack-plugin');
 module.exports = {
     mode: 'production',
     entry: {
-        'sane-twitch-chat': path.join(__dirname, 'src', 'index.mjs')
+        'sane-twitch-chat': path.join(__dirname, 'src', 'index.js')
     },
     output: {
         path: path.resolve(__dirname, 'output'),
