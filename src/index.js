@@ -59,19 +59,16 @@ const HIDE_MESSAGE_ANIM_OPTS = { duration: 500, fill: 'forwards' };
 
 const SPLITTER = new Graphemer();
 
-function hideNode (msgNode) {
-    return new Promise((resolve, reject) => {
-        msgNode.style.color = '#ff0000';
-        const animEffects = new KeyframeEffect(
-            msgNode,
-            HIDE_MESSAGE_KEYFRAMES,
-            HIDE_MESSAGE_ANIM_OPTS
-        );
-        const anim = new Animation(animEffects, document.timeline);
-        anim.onfinish = () => { msgNode.style.display = 'none'; };
-        anim.play();
-        resolve(true);
-    });
+async function hideNode (msgNode) {
+    msgNode.style.color = '#ff0000';
+    const animEffects = new KeyframeEffect(
+        msgNode,
+        HIDE_MESSAGE_KEYFRAMES,
+        HIDE_MESSAGE_ANIM_OPTS
+    );
+    const anim = new Animation(animEffects, document.timeline);
+    anim.onfinish = () => { msgNode.style.display = 'none'; };
+    anim.play();
 }
 
 function evaluateMessage (combinedMessage, msgNode) {
