@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.160
+// @version     1.0.185
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -3665,7 +3665,7 @@ const FAST_CHAT_CACHE_SIZE = 0;
  * This determines timeout of how long will long messages / copy-pastas be kept in cache.
  */
 
-const LONG_CHAT_CACHE_TIMEOUT = 60 * 1000;
+const LONG_CHAT_CACHE_TIMEOUT = 60000;
 /**
  * Unlimitted cache size for long messages.
  */
@@ -3683,13 +3683,13 @@ const SPACE_NORM_RE = /([\s])[\s]+/gu;
 const BRAILLE_RE = /^[\u{2800}-\u{28FF}]+$/u;
 let prevMessage;
 const fastChatCache = new (lru_cache__WEBPACK_IMPORTED_MODULE_0___default())({
-  max: FAST_CHAT_CACHE_SIZE,
-  maxAge: FAST_CHAT_CACHE_TIMEOUT,
+  max: 0,
+  maxAge: 2500,
   length: () => 1
 });
 const longChatCache = new (lru_cache__WEBPACK_IMPORTED_MODULE_0___default())({
-  max: LONG_CHAT_CACHE_SIZE,
-  maxAge: LONG_CHAT_CACHE_TIMEOUT,
+  max: 0,
+  maxAge: 60000,
   length: () => 1
 });
 const HIDE_MESSAGE_KEYFRAMES = [{
@@ -3763,14 +3763,13 @@ function evaluateMessage(combinedMessage, msgNode) {
   }
 }
 
-document.arrive(CHAT_SEL, chatNode => {
+document.arrive(".chat-list__list-container, .chat-scrollable-area__message-container", chatNode => {
   console.log('Sane chat cleanup is enabled.');
   chatNode.arrive(CHAT_LINE_SEL, msgNode => {
-    const xpathResult = document.evaluate('descendant::div[contains(@class,"chat-line__message--emote-button")]/span//img' + ' | descendant::a[contains(@class,"link-fragment")]' + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]//div[contains(@class,"bttv-emote")]/img' + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]', msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-    let node;
+    const xpathResult = document.evaluate("descendant::div[contains(@class,\"chat-line__message--emote-button\")]/span//img | descendant::a[contains(@class,\"link-fragment\")] | descendant::span[contains(@class,\"text-fragment\") or contains(@class,\"mention-fragment\")]//div[contains(@class,\"bttv-emote\")]/img | descendant::span[contains(@class,\"text-fragment\") or contains(@class,\"mention-fragment\")]", msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
     const fragments = [];
 
-    while (node = xpathResult.iterateNext()) {
+    for (let node; node = xpathResult.iterateNext();) {
       if (node.nodeName === 'IMG') {
         const alt = node.getAttribute('alt');
 

@@ -122,9 +122,8 @@ document.arrive(CHAT_SEL, (chatNode) => {
                 + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]//div[contains(@class,"bttv-emote")]/img'
                 + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]'),
         msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-        let node;
         const fragments = [];
-        while ((node = xpathResult.iterateNext())) {
+        for (let node; (node = xpathResult.iterateNext());) {
             if (node.nodeName === 'IMG') {
                 const alt = node.getAttribute('alt');
                 if (alt) {
