@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.186
+// @version     1.0.193
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -3680,7 +3680,9 @@ console.log('Starting Sane chat cleanup');
 const CHAT_SEL = '.chat-list__list-container, .chat-scrollable-area__message-container';
 const CHAT_LINE_SEL = '.chat-line__message';
 const SPACE_NORM_RE = /([\s])[\s]+/gu;
-const BRAILLE_RE = /^[\u{2800}-\u{28FF}]+$/u;
+const BRAILLE_RE = /^[\u{2800}-\u{28FF}]+$/u; // This RegExp is used to replace text added by BTTV extension with just the emote name.
+
+const STRIP_BTTV_TEXT_RE = /(?:^|\s)(\S+)(?:\r\n?|\n)Channel: \S+(?:\r\n?|\n)\S+ Channel Emotes(?:\r\n?|\n)\1(?:$|\s)/gum;
 let prevMessage;
 const fastChatCache = new (lru_cache__WEBPACK_IMPORTED_MODULE_0___default())({
   max: 0,
@@ -3781,7 +3783,7 @@ document.arrive(".chat-list__list-container, .chat-scrollable-area__message-cont
       }
     }
 
-    const combinedMessage = fragments.join(' ').trim().replace(SPACE_NORM_RE, '$1');
+    const combinedMessage = fragments.join(' ').trim().replace(SPACE_NORM_RE, '$1').replace(STRIP_BTTV_TEXT_RE, '$1');
     console.log('combined message: ' + combinedMessage);
     evaluateMessage(combinedMessage, msgNode);
   });
