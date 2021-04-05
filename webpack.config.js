@@ -60,6 +60,7 @@ module.exports = {
                 author: 'wilx',
                 homepage: 'https://github.com/wilx/sane-twitch-chat',
                 namespace: 'https://github.com/wilx/sane-twitch-chat',
+                downloadURL: 'https://github.com/wilx/sane-twitch-chat/raw/master/output/index.user.js',
                 match: 'https://www.twitch.tv/*',
                 'run-at': 'document-end',
                 grant: 'none'
