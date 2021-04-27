@@ -80,7 +80,7 @@ function evaluateMessage (combinedMessage, msgNode) {
 
     // Filter repeated messages.
     if (combinedMessage === prevMessage) {
-        console.log('Hiding repeated message: ' + combinedMessage);
+        console.log(`Hiding repeated message: ${combinedMessage}`);
         hideNode(msgNode);
         return;
     }
@@ -88,7 +88,7 @@ function evaluateMessage (combinedMessage, msgNode) {
 
     // Filter messages with Braille symbols only.
     if (BRAILLE_RE.test(combinedMessage)) {
-        console.log('Hiding Braille only message: ' + combinedMessage);
+        console.log(`Hiding Braille only message: ${combinedMessage}`);
         hideNode(msgNode);
         return;
     }
@@ -97,7 +97,7 @@ function evaluateMessage (combinedMessage, msgNode) {
     // See FAST_CHAT_CACHE_TIMEOUT.
     const factCachedNode = fastChatCache.get(combinedMessage);
     if (factCachedNode !== undefined) {
-        console.log('Hiding message present in fast chat cache: ' + combinedMessage);
+        console.log(`Hiding message present in fast chat cache: ${combinedMessage}`);
         hideNode(msgNode);
         return;
     }
@@ -108,7 +108,7 @@ function evaluateMessage (combinedMessage, msgNode) {
     if (combinedMessageLength >= LONG_CHAT_THRESHOLD_LENGTH) {
         const longCachedNode = longChatCache.get(combinedMessage);
         if (longCachedNode !== undefined) {
-            console.log('Hiding long message / copy-pasta present in long chat cache: ' + combinedMessage);
+            console.log(`Hiding long message / copy-pasta present in long chat cache: ${combinedMessage}`);
             hideNode(msgNode);
             return;
         }
@@ -138,7 +138,7 @@ document.arrive(CHAT_SEL, (chatNode) => {
         const combinedMessage = fragments.join(' ').trim()
             .replace(SPACE_NORM_RE, '$1')
             .replace(STRIP_BTTV_TEXT_RE, '$1');
-        console.log('combined message: ' + combinedMessage);
+        console.log(`combined message: ${combinedMessage}`);
         evaluateMessage(combinedMessage, msgNode);
     });
 });

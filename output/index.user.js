@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.237
+// @version     1.0.248
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -13488,7 +13488,7 @@ function evaluateMessage(combinedMessage, msgNode) {
 
 
   if (combinedMessage === prevMessage) {
-    console.log('Hiding repeated message: ' + combinedMessage);
+    console.log(`Hiding repeated message: ${combinedMessage}`);
     hideNode(msgNode);
     return;
   }
@@ -13496,7 +13496,7 @@ function evaluateMessage(combinedMessage, msgNode) {
   prevMessage = combinedMessage; // Filter messages with Braille symbols only.
 
   if (BRAILLE_RE.test(combinedMessage)) {
-    console.log('Hiding Braille only message: ' + combinedMessage);
+    console.log(`Hiding Braille only message: ${combinedMessage}`);
     hideNode(msgNode);
     return;
   } // Filter chat messages which repeat the same text in very short time.
@@ -13506,7 +13506,7 @@ function evaluateMessage(combinedMessage, msgNode) {
   const factCachedNode = fastChatCache.get(combinedMessage);
 
   if (factCachedNode !== undefined) {
-    console.log('Hiding message present in fast chat cache: ' + combinedMessage);
+    console.log(`Hiding message present in fast chat cache: ${combinedMessage}`);
     hideNode(msgNode);
     return;
   }
@@ -13519,7 +13519,7 @@ function evaluateMessage(combinedMessage, msgNode) {
     const longCachedNode = longChatCache.get(combinedMessage);
 
     if (longCachedNode !== undefined) {
-      console.log('Hiding long message / copy-pasta present in long chat cache: ' + combinedMessage);
+      console.log(`Hiding long message / copy-pasta present in long chat cache: ${combinedMessage}`);
       hideNode(msgNode);
       return;
     }
@@ -13547,7 +13547,7 @@ document.arrive(CHAT_SEL, chatNode => {
     }
 
     const combinedMessage = fragments.join(' ').trim().replace(SPACE_NORM_RE, '$1').replace(STRIP_BTTV_TEXT_RE, '$1');
-    console.log('combined message: ' + combinedMessage);
+    console.log(`combined message: ${combinedMessage}`);
     evaluateMessage(combinedMessage, msgNode);
   });
 });
