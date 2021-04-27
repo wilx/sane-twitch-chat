@@ -170,5 +170,4 @@ emoteAnimationStyleNode.setAttribute('id', 'sane-twitch-chat');
 emoteAnimationStyleNode.textContent = EMOTE_ANIMATION_STYLE;
 
 // Append the node to <head>.
-//  document.body.insertAdjacentElement('afterend', emoteAnimationStyleNode);
 document.head.appendChild(emoteAnimationStyleNode);

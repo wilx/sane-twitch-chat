@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.248
+// @version     1.0.249
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -13574,7 +13574,6 @@ emoteAnimationStyleNode.setAttribute('type', 'text/css');
 emoteAnimationStyleNode.setAttribute('id', 'sane-twitch-chat'); // Fill it with CSS style.
 
 emoteAnimationStyleNode.textContent = EMOTE_ANIMATION_STYLE; // Append the node to <head>.
-//  document.body.insertAdjacentElement('afterend', emoteAnimationStyleNode);
 
 document.head.appendChild(emoteAnimationStyleNode);
 })();
