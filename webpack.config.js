@@ -30,7 +30,7 @@ module.exports = {
                             ]
                         ],
                         plugins: [
-                            'babel-plugin-minify-constant-folding',
+                            // 'babel-plugin-minify-constant-folding',
                             'babel-plugin-minify-guarded-expressions',
                             ['babel-plugin-transform-remove-undefined', {
                                 tdz: true

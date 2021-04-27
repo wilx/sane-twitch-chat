@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.210
+// @version     1.0.237
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -13428,7 +13428,7 @@ const FAST_CHAT_CACHE_SIZE = 0;
  * This determines timeout of how long will long messages / copy-pastas be kept in cache.
  */
 
-const LONG_CHAT_CACHE_TIMEOUT = 60000;
+const LONG_CHAT_CACHE_TIMEOUT = 60 * 1000;
 /**
  * Unlimitted cache size for long messages.
  */
@@ -13448,13 +13448,13 @@ const BRAILLE_RE = /^[\u{2800}-\u{28FF}]+$/u; // This RegExp is used to replace 
 const STRIP_BTTV_TEXT_RE = /(?:^|\s)(\S+)(?:\r\n?|\n)Channel: \S+(?:\r\n?|\n)\S+ Channel Emotes(?:\r\n?|\n)\1(?:$|\s)/gum;
 let prevMessage;
 const fastChatCache = new (lru_cache__WEBPACK_IMPORTED_MODULE_0___default())({
-  max: 0,
-  maxAge: 2500,
+  max: FAST_CHAT_CACHE_SIZE,
+  maxAge: FAST_CHAT_CACHE_TIMEOUT,
   length: () => 1
 });
 const longChatCache = new (lru_cache__WEBPACK_IMPORTED_MODULE_0___default())({
-  max: 0,
-  maxAge: 60000,
+  max: LONG_CHAT_CACHE_SIZE,
+  maxAge: LONG_CHAT_CACHE_TIMEOUT,
   length: () => 1
 });
 const HIDE_MESSAGE_KEYFRAMES = [{
@@ -13528,10 +13528,10 @@ function evaluateMessage(combinedMessage, msgNode) {
   }
 }
 
-document.arrive(".chat-list__list-container, .chat-scrollable-area__message-container", chatNode => {
+document.arrive(CHAT_SEL, chatNode => {
   console.log('Sane chat cleanup is enabled.');
   chatNode.arrive(CHAT_LINE_SEL, msgNode => {
-    const xpathResult = document.evaluate("descendant::div[contains(@class,\"chat-line__message--emote-button\")]/span//img | descendant::a[contains(@class,\"link-fragment\")] | descendant::span[contains(@class,\"text-fragment\") or contains(@class,\"mention-fragment\")]//div[contains(@class,\"bttv-emote\")]/img | descendant::span[contains(@class,\"text-fragment\") or contains(@class,\"mention-fragment\")]", msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+    const xpathResult = document.evaluate('descendant::div[contains(@class,"chat-line__message--emote-button")]/span//img' + ' | descendant::a[contains(@class,"link-fragment")]' + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]//div[contains(@class,"bttv-emote")]/img' + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]', msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
     const fragments = [];
 
     for (let node; node = xpathResult.iterateNext();) {
@@ -13551,6 +13551,32 @@ document.arrive(".chat-list__list-container, .chat-scrollable-area__message-cont
     evaluateMessage(combinedMessage, msgNode);
   });
 });
+const EMOTE_ANIMATION_STYLE = `
+.chat-line__message--emote:hover,
+.chat-badge:hover {
+    transform: scale(2);
+    z-index: 1;
+    animation-name: emote-zoom;
+    animation-duration: 0.250s;
+}
+@keyframes emote-zoom {
+    from {
+        transform: scale(1);
+    }
+    to {
+        transform: scale(2);
+    }
+}
+`; // Prepare a node.
+
+const emoteAnimationStyleNode = document.createElement('style');
+emoteAnimationStyleNode.setAttribute('type', 'text/css');
+emoteAnimationStyleNode.setAttribute('id', 'sane-twitch-chat'); // Fill it with CSS style.
+
+emoteAnimationStyleNode.textContent = EMOTE_ANIMATION_STYLE; // Append the node to <head>.
+//  document.body.insertAdjacentElement('afterend', emoteAnimationStyleNode);
+
+document.head.appendChild(emoteAnimationStyleNode);
 })();
 
 /******/ })()

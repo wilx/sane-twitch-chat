@@ -142,3 +142,33 @@ document.arrive(CHAT_SEL, (chatNode) => {
         evaluateMessage(combinedMessage, msgNode);
     });
 });
+
+const EMOTE_ANIMATION_STYLE = `
+.chat-line__message--emote:hover,
+.chat-badge:hover {
+    transform: scale(2);
+    z-index: 1;
+    animation-name: emote-zoom;
+    animation-duration: 0.250s;
+}
+@keyframes emote-zoom {
+    from {
+        transform: scale(1);
+    }
+    to {
+        transform: scale(2);
+    }
+}
+`;
+
+// Prepare a node.
+const emoteAnimationStyleNode = document.createElement('style');
+emoteAnimationStyleNode.setAttribute('type', 'text/css');
+emoteAnimationStyleNode.setAttribute('id', 'sane-twitch-chat');
+
+// Fill it with CSS style.
+emoteAnimationStyleNode.textContent = EMOTE_ANIMATION_STYLE;
+
+// Append the node to <head>.
+//  document.body.insertAdjacentElement('afterend', emoteAnimationStyleNode);
+document.head.appendChild(emoteAnimationStyleNode);
