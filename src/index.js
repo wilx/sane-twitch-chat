@@ -116,58 +116,71 @@ function evaluateMessage (combinedMessage, msgNode) {
     }
 }
 
-document.arrive(CHAT_SEL, (chatNode) => {
-    console.log('Sane chat cleanup is enabled.');
-    chatNode.arrive(CHAT_LINE_SEL, (msgNode) => {
-        const xpathResult = document.evaluate(('descendant::div[contains(@class,"chat-line__message--emote-button")]/span//img'
-                + ' | descendant::a[contains(@class,"link-fragment")]'
-                + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]//div[contains(@class,"bttv-emote")]/img'
-                + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]'),
-        msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-        const fragments = [];
-        for (let node; (node = xpathResult.iterateNext());) {
-            if (node.nodeName === 'IMG') {
-                const alt = node.getAttribute('alt');
-                if (alt) {
-                    fragments.push(alt);
+function watchChatMessages () {
+    document.arrive(CHAT_SEL, (chatNode) => {
+        console.log('Sane chat cleanup is enabled.');
+        chatNode.arrive(CHAT_LINE_SEL, (msgNode) => {
+            const xpathResult = document.evaluate(('descendant::div[contains(@class,"chat-line__message--emote-button")]/span//img'
+                    + ' | descendant::a[contains(@class,"link-fragment")]'
+                    + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]//div[contains(@class,"bttv-emote")]/img'
+                    + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]'),
+            msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+            const fragments = [];
+            for (let node; (node = xpathResult.iterateNext());) {
+                if (node.nodeName === 'IMG') {
+                    const alt = node.getAttribute('alt');
+                    if (alt) {
+                        fragments.push(alt);
+                    }
+                } else {
+                    fragments.push(node.textContent);
                 }
-            } else {
-                fragments.push(node.textContent);
             }
-        }
-        const combinedMessage = fragments.join(' ').trim()
-            .replace(SPACE_NORM_RE, '$1')
-            .replace(STRIP_BTTV_TEXT_RE, '$1');
-        console.log(`combined message: ${combinedMessage}`);
-        evaluateMessage(combinedMessage, msgNode);
+            const combinedMessage = fragments.join(' ').trim()
+                .replace(SPACE_NORM_RE, '$1')
+                .replace(STRIP_BTTV_TEXT_RE, '$1');
+            console.log(`combined message: ${combinedMessage}`);
+            evaluateMessage(combinedMessage, msgNode);
+        });
     });
-});
-
-const EMOTE_ANIMATION_STYLE = `
-.chat-line__message--emote:hover,
-.chat-badge:hover {
-    transform: scale(2);
-    z-index: 1;
-    animation-name: emote-zoom;
-    animation-duration: 0.250s;
 }
-@keyframes emote-zoom {
-    from {
-        transform: scale(1);
-    }
-    to {
+
+function injectStyleSheet () {
+    const EMOTE_ANIMATION_STYLE = `
+    .chat-line__message--emote:hover,
+    .chat-badge:hover {
         transform: scale(2);
+        z-index: 1;
+        animation-name: emote-zoom;
+        animation-duration: 0.250s;
     }
+    @keyframes emote-zoom {
+        from {
+            transform: scale(1);
+        }
+        to {
+            transform: scale(2);
+        }
+    }
+    `;
+
+    // Prepare a node.
+    const emoteAnimationStyleNode = document.createElement('style');
+    emoteAnimationStyleNode.setAttribute('type', 'text/css');
+    emoteAnimationStyleNode.setAttribute('id', 'sane-twitch-chat');
+
+    // Fill it with CSS style.
+    emoteAnimationStyleNode.textContent = EMOTE_ANIMATION_STYLE;
+
+    // Append the node to <head>.
+    document.head.appendChild(emoteAnimationStyleNode);
 }
-`;
 
-// Prepare a node.
-const emoteAnimationStyleNode = document.createElement('style');
-emoteAnimationStyleNode.setAttribute('type', 'text/css');
-emoteAnimationStyleNode.setAttribute('id', 'sane-twitch-chat');
+watchChatMessages();
+injectStyleSheet();
 
-// Fill it with CSS style.
-emoteAnimationStyleNode.textContent = EMOTE_ANIMATION_STYLE;
-
-// Append the node to <head>.
-document.head.appendChild(emoteAnimationStyleNode);
+class Test {
+    async foo () {
+        return 1;
+    }
+};
