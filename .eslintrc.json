@@ -19,5 +19,6 @@
         "semi": [2, "always"],
         "indent": ["error", 4],
         "operator-linebreak": ["error", "before"]
-    }
+    },
+    "parser": "babel-eslint"
 }
