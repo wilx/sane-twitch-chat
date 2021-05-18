@@ -7,7 +7,7 @@ import Graphemer from 'graphemer';
  * The default is 1.5 seconds. This defends against all the LULW and Pog avalanches
  * that sometimes happen in large Twitch channel chats.
  */
-const FAST_CHAT_CACHE_TIMEOUT = 2500;
+const FAST_CHAT_CACHE_TIMEOUT = 2_500;
 /**
  * Unlimitted cache size for fast messages.
  */
@@ -16,7 +16,7 @@ const FAST_CHAT_CACHE_SIZE = 0;
 /**
  * This determines timeout of how long will long messages / copy-pastas be kept in cache.
  */
-const LONG_CHAT_CACHE_TIMEOUT = 60 * 1000;
+const LONG_CHAT_CACHE_TIMEOUT = 60 * 1_000;
 /**
  * Unlimitted cache size for long messages.
  */
@@ -80,7 +80,7 @@ class SaneTwitchChat {
         length: () => 1
     });
 
-    async hideNode (msgNode) {
+    async #hideNode (msgNode) {
         msgNode.style.color = '#ff0000';
         const animEffects = new KeyframeEffect(
             msgNode,
@@ -92,7 +92,7 @@ class SaneTwitchChat {
         anim.play();
     }
 
-    evaluateMessage (combinedMessage, msgNode) {
+    #evaluateMessage (combinedMessage, msgNode) {
         if (!combinedMessage) {
             return;
         }
@@ -100,7 +100,7 @@ class SaneTwitchChat {
         // Filter repeated messages.
         if (combinedMessage === this.prevMessage) {
             console.log(`Hiding repeated message: ${combinedMessage}`);
-            this.hideNode(msgNode);
+            this.#hideNode(msgNode);
             return;
         }
         this.#prevMessage = combinedMessage;
@@ -108,7 +108,7 @@ class SaneTwitchChat {
         // Filter messages with Braille symbols only.
         if (BRAILLE_RE.test(combinedMessage)) {
             console.log(`Hiding Braille only message: ${combinedMessage}`);
-            this.hideNode(msgNode);
+            this.#hideNode(msgNode);
             return;
         }
 
@@ -117,7 +117,7 @@ class SaneTwitchChat {
         const factCachedNode = this.#fastChatCache.get(combinedMessage);
         if (factCachedNode !== undefined) {
             console.log(`Hiding message present in fast chat cache: ${combinedMessage}`);
-            this.hideNode(msgNode);
+            this.#hideNode(msgNode);
             return;
         }
         this.#fastChatCache.set(combinedMessage, msgNode);
@@ -128,14 +128,14 @@ class SaneTwitchChat {
             const longCachedNode = this.#longChatCache.get(combinedMessage);
             if (longCachedNode !== undefined) {
                 console.log(`Hiding long message / copy-pasta present in long chat cache: ${combinedMessage}`);
-                this.hideNode(msgNode);
+                this.#hideNode(msgNode);
                 return;
             }
             this.#longChatCache.set(combinedMessage, msgNode);
         }
     }
 
-    watchChatMessages () {
+    #watchChatMessages () {
         document.arrive(CHAT_SEL, (chatNode) => {
             console.log('Sane chat cleanup is enabled.');
             chatNode.arrive(CHAT_LINE_SEL, (msgNode) => {
@@ -159,12 +159,12 @@ class SaneTwitchChat {
                     .replace(SPACE_NORM_RE, '$1')
                     .replace(STRIP_BTTV_TEXT_RE, '$1');
                 console.log(`combined message: ${combinedMessage}`);
-                this.evaluateMessage(combinedMessage, msgNode);
+                this.#evaluateMessage(combinedMessage, msgNode);
             });
         });
     }
 
-    injectStyleSheet () {
+    #injectStyleSheet () {
         // Prepare a node.
         const emoteAnimationStyleNode = document.createElement('style');
         emoteAnimationStyleNode.setAttribute('type', 'text/css');
@@ -182,8 +182,8 @@ class SaneTwitchChat {
     }
 
     init () {
-        this.watchChatMessages();
-        this.injectStyleSheet();
+        this.#watchChatMessages();
+        this.#injectStyleSheet();
     }
 };
 
