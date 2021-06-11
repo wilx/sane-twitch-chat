@@ -13,7 +13,11 @@
     },
     "parserOptions": {
         "ecmaVersion": 11,
-        "sourceType": "module"
+        "sourceType": "module",
+        "ecmaFeatures": {
+            "shippedProposals": true,
+            "classStaticBlock": true
+        }
     },
     "rules": {
         "semi": [2, "always"],

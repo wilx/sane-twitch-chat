@@ -1,6 +1,6 @@
 {
   "name": "sane-twitch-chat",
-  "version": "1.0.282",
+  "version": "1.0.296",
   "description": "Twitch chat sanitizer.",
   "license": "BSD-2-Clause",
   "homepage": "https://github.com/wilx/sane-twitch-chat",
@@ -21,7 +21,7 @@
   ],
   "dependencies": {
     "arrive": "^2.4.1",
-    "core-js": "3.12.1",
+    "core-js": "3.13.1",
     "graphemer": "^1.2.0",
     "lodash": "^4.17.21",
     "lru-cache": "^6.0.0"
@@ -29,8 +29,9 @@
   "devDependencies": {
     "@babel/cli": "^7.14.3",
     "@babel/core": "^7.14.3",
+    "@babel/plugin-proposal-class-static-block": "^7.14.3",
     "@babel/plugin-transform-runtime": "^7.14.3",
-    "@babel/preset-env": "^7.14.2",
+    "@babel/preset-env": "^7.14.4",
     "@types/arrive": "^2.4.0",
     "@webpack-cli/info": "^1.2.4",
     "@webpack-cli/migrate": "^1.1.2",
@@ -44,14 +45,14 @@
     "babel-plugin-transform-simplify-comparison-operators": "^6.9.4",
     "browserslist": "^4.16.6",
     "chokidar": "^3.5.1",
-    "eslint": "^7.26.0",
-    "eslint-config-standard": "^16.0.2",
-    "eslint-plugin-import": "^2.23.2",
+    "eslint": "^7.27.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.23.4",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.0",
     "jsdoc": "^3.6.7",
     "jsdoc-webpack-plugin": "^0.3.0",
-    "webpack": "^5.37.0",
+    "webpack": "^5.38.1",
     "webpack-cli": "^4.7.0",
     "webpack-userscript": "^2.5.8",
     "yarn-audit-html": "^3.0.0"
@@ -62,8 +63,8 @@
   },
   "browserslist": {
     "production": [
-      "Firefox >= 88",
-      "Chrome >= 90"
+      "Firefox >= 89",
+      "Chrome >= 91"
     ],
     "compat": [
       "> 1%",
