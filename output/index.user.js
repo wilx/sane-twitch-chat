@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.300
+// @version     1.0.306
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -13409,18 +13409,6 @@ var __webpack_exports__ = {};
 /* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(arrive__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(777);
 /* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(graphemer__WEBPACK_IMPORTED_MODULE_2__);
-function _classPrivateFieldGet(receiver, privateMap) { var descriptor = _classExtractFieldDescriptor(receiver, privateMap, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
-
-function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
-
-function _classPrivateFieldSet(receiver, privateMap, value) { var descriptor = _classExtractFieldDescriptor(receiver, privateMap, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
-
-function _classExtractFieldDescriptor(receiver, privateMap, action) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to " + action + " private field on non-instance"); } return privateMap.get(receiver); }
-
-function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
-
-function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-
 
 
 
@@ -13486,169 +13474,124 @@ const EMOTE_ANIMATION_STYLE = `
 }
 `;
 
-var _prevMessage = /*#__PURE__*/new WeakMap();
-
-var _fastChatCache = /*#__PURE__*/new WeakMap();
-
-var _longChatCache = /*#__PURE__*/new WeakMap();
-
-var _hideNode = /*#__PURE__*/new WeakSet();
-
-var _evaluateMessage = /*#__PURE__*/new WeakSet();
-
-var _watchChatMessages = /*#__PURE__*/new WeakSet();
-
-var _injectStyleSheet = /*#__PURE__*/new WeakSet();
-
 class SaneTwitchChat {
+  #prevMessage = null;
+  #fastChatCache = new (lru_cache__WEBPACK_IMPORTED_MODULE_0___default())({
+    max: FAST_CHAT_CACHE_SIZE,
+    maxAge: FAST_CHAT_CACHE_TIMEOUT,
+    length: () => 1
+  });
+  #longChatCache = new (lru_cache__WEBPACK_IMPORTED_MODULE_0___default())({
+    max: LONG_CHAT_CACHE_SIZE,
+    maxAge: LONG_CHAT_CACHE_TIMEOUT,
+    length: () => 1
+  });
+
+  async #hideNode(msgNode) {
+    msgNode.style.color = '#ff0000';
+    const animEffects = new KeyframeEffect(msgNode, HIDE_MESSAGE_KEYFRAMES, HIDE_MESSAGE_ANIM_OPTS);
+    const anim = new Animation(animEffects, document.timeline);
+
+    anim.onfinish = () => {
+      msgNode.style.display = 'none';
+    };
+
+    anim.play();
+  }
+
+  #evaluateMessage(combinedMessage, msgNode) {
+    if (!combinedMessage) {
+      return;
+    } // Filter repeated messages.
+
+
+    if (combinedMessage === this.prevMessage) {
+      console.log(`Hiding repeated message: ${combinedMessage}`);
+      this.#hideNode(msgNode);
+      return;
+    }
+
+    this.#prevMessage = combinedMessage; // Filter messages with Braille symbols only.
+
+    if (BRAILLE_RE.test(combinedMessage)) {
+      console.log(`Hiding Braille only message: ${combinedMessage}`);
+      this.#hideNode(msgNode);
+      return;
+    } // Filter chat messages which repeat the same text in very short time.
+    // See FAST_CHAT_CACHE_TIMEOUT.
+
+
+    const factCachedNode = this.#fastChatCache.get(combinedMessage);
+
+    if (factCachedNode !== undefined) {
+      console.log(`Hiding message present in fast chat cache: ${combinedMessage}`);
+      this.#hideNode(msgNode);
+      return;
+    }
+
+    this.#fastChatCache.set(combinedMessage, msgNode); // Filter long chat messages which repeat within longer period of time.
+
+    const combinedMessageLength = SPLITTER.countGraphemes(combinedMessage);
+
+    if (combinedMessageLength >= LONG_CHAT_THRESHOLD_LENGTH) {
+      const longCachedNode = this.#longChatCache.get(combinedMessage);
+
+      if (longCachedNode !== undefined) {
+        console.log(`Hiding long message / copy-pasta present in long chat cache: ${combinedMessage}`);
+        this.#hideNode(msgNode);
+        return;
+      }
+
+      this.#longChatCache.set(combinedMessage, msgNode);
+    }
+  }
+
+  #watchChatMessages() {
+    document.arrive(CHAT_SEL, chatNode => {
+      console.log('Sane chat cleanup is enabled.');
+      chatNode.arrive(CHAT_LINE_SEL, msgNode => {
+        const xpathResult = document.evaluate('descendant::div[contains(@class,"chat-line__message--emote-button")]/span//img' + ' | descendant::a[contains(@class,"link-fragment")]' + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]//div[contains(@class,"bttv-emote")]/img' + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]', msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+        const fragments = [];
+
+        for (let node; node = xpathResult.iterateNext();) {
+          if (node.nodeName === 'IMG') {
+            const alt = node.getAttribute('alt');
+
+            if (alt) {
+              fragments.push(alt);
+            }
+          } else {
+            fragments.push(node.textContent);
+          }
+        }
+
+        const combinedMessage = fragments.join(' ').trim().replace(SPACE_NORM_RE, '$1').replace(STRIP_BTTV_TEXT_RE, '$1');
+        console.log(`combined message: ${combinedMessage}`);
+        this.#evaluateMessage(combinedMessage, msgNode);
+      });
+    });
+  }
+
+  #injectStyleSheet() {
+    // Prepare a node.
+    const emoteAnimationStyleNode = document.createElement('style');
+    emoteAnimationStyleNode.setAttribute('type', 'text/css');
+    emoteAnimationStyleNode.setAttribute('id', 'sane-twitch-chat'); // Fill it with CSS style.
+
+    emoteAnimationStyleNode.textContent = EMOTE_ANIMATION_STYLE; // Append the node to <head>.
+
+    document.head.appendChild(emoteAnimationStyleNode);
+  }
+
   constructor() {
-    _injectStyleSheet.add(this);
-
-    _watchChatMessages.add(this);
-
-    _evaluateMessage.add(this);
-
-    _hideNode.add(this);
-
-    _prevMessage.set(this, {
-      writable: true,
-      value: null
-    });
-
-    _fastChatCache.set(this, {
-      writable: true,
-      value: new (lru_cache__WEBPACK_IMPORTED_MODULE_0___default())({
-        max: FAST_CHAT_CACHE_SIZE,
-        maxAge: FAST_CHAT_CACHE_TIMEOUT,
-        length: () => 1
-      })
-    });
-
-    _longChatCache.set(this, {
-      writable: true,
-      value: new (lru_cache__WEBPACK_IMPORTED_MODULE_0___default())({
-        max: LONG_CHAT_CACHE_SIZE,
-        maxAge: LONG_CHAT_CACHE_TIMEOUT,
-        length: () => 1
-      })
-    });
-
     console.log('Starting Sane chat cleanup');
   }
 
   init() {
-    _classPrivateMethodGet(this, _watchChatMessages, _watchChatMessages2).call(this);
-
-    _classPrivateMethodGet(this, _injectStyleSheet, _injectStyleSheet2).call(this);
+    this.#watchChatMessages();
+    this.#injectStyleSheet();
   }
 
-}
-
-async function _hideNode2(msgNode) {
-  msgNode.style.color = '#ff0000';
-  const animEffects = new KeyframeEffect(msgNode, HIDE_MESSAGE_KEYFRAMES, HIDE_MESSAGE_ANIM_OPTS);
-  const anim = new Animation(animEffects, document.timeline);
-
-  anim.onfinish = () => {
-    msgNode.style.display = 'none';
-  };
-
-  anim.play();
-}
-
-function _evaluateMessage2(combinedMessage, msgNode) {
-  if (!combinedMessage) {
-    return;
-  } // Filter repeated messages.
-
-
-  if (combinedMessage === this.prevMessage) {
-    console.log(`Hiding repeated message: ${combinedMessage}`);
-
-    _classPrivateMethodGet(this, _hideNode, _hideNode2).call(this, msgNode);
-
-    return;
-  }
-
-  _classPrivateFieldSet(this, _prevMessage, combinedMessage); // Filter messages with Braille symbols only.
-
-
-  if (BRAILLE_RE.test(combinedMessage)) {
-    console.log(`Hiding Braille only message: ${combinedMessage}`);
-
-    _classPrivateMethodGet(this, _hideNode, _hideNode2).call(this, msgNode);
-
-    return;
-  } // Filter chat messages which repeat the same text in very short time.
-  // See FAST_CHAT_CACHE_TIMEOUT.
-
-
-  const factCachedNode = _classPrivateFieldGet(this, _fastChatCache).get(combinedMessage);
-
-  if (factCachedNode !== undefined) {
-    console.log(`Hiding message present in fast chat cache: ${combinedMessage}`);
-
-    _classPrivateMethodGet(this, _hideNode, _hideNode2).call(this, msgNode);
-
-    return;
-  }
-
-  _classPrivateFieldGet(this, _fastChatCache).set(combinedMessage, msgNode); // Filter long chat messages which repeat within longer period of time.
-
-
-  const combinedMessageLength = SPLITTER.countGraphemes(combinedMessage);
-
-  if (combinedMessageLength >= LONG_CHAT_THRESHOLD_LENGTH) {
-    const longCachedNode = _classPrivateFieldGet(this, _longChatCache).get(combinedMessage);
-
-    if (longCachedNode !== undefined) {
-      console.log(`Hiding long message / copy-pasta present in long chat cache: ${combinedMessage}`);
-
-      _classPrivateMethodGet(this, _hideNode, _hideNode2).call(this, msgNode);
-
-      return;
-    }
-
-    _classPrivateFieldGet(this, _longChatCache).set(combinedMessage, msgNode);
-  }
-}
-
-function _watchChatMessages2() {
-  document.arrive(CHAT_SEL, chatNode => {
-    console.log('Sane chat cleanup is enabled.');
-    chatNode.arrive(CHAT_LINE_SEL, msgNode => {
-      const xpathResult = document.evaluate('descendant::div[contains(@class,"chat-line__message--emote-button")]/span//img' + ' | descendant::a[contains(@class,"link-fragment")]' + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]//div[contains(@class,"bttv-emote")]/img' + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]', msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-      const fragments = [];
-
-      for (let node; node = xpathResult.iterateNext();) {
-        if (node.nodeName === 'IMG') {
-          const alt = node.getAttribute('alt');
-
-          if (alt) {
-            fragments.push(alt);
-          }
-        } else {
-          fragments.push(node.textContent);
-        }
-      }
-
-      const combinedMessage = fragments.join(' ').trim().replace(SPACE_NORM_RE, '$1').replace(STRIP_BTTV_TEXT_RE, '$1');
-      console.log(`combined message: ${combinedMessage}`);
-
-      _classPrivateMethodGet(this, _evaluateMessage, _evaluateMessage2).call(this, combinedMessage, msgNode);
-    });
-  });
-}
-
-function _injectStyleSheet2() {
-  // Prepare a node.
-  const emoteAnimationStyleNode = document.createElement('style');
-  emoteAnimationStyleNode.setAttribute('type', 'text/css');
-  emoteAnimationStyleNode.setAttribute('id', 'sane-twitch-chat'); // Fill it with CSS style.
-
-  emoteAnimationStyleNode.textContent = EMOTE_ANIMATION_STYLE; // Append the node to <head>.
-
-  document.head.appendChild(emoteAnimationStyleNode);
 }
 
 const saneTwitchChat = new SaneTwitchChat();
