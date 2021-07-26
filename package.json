@@ -1,6 +1,6 @@
 {
   "name": "sane-twitch-chat",
-  "version": "1.0.306",
+  "version": "1.0.308",
   "description": "Twitch chat sanitizer.",
   "license": "BSD-2-Clause",
   "homepage": "https://github.com/wilx/sane-twitch-chat",
@@ -23,7 +23,6 @@
     "arrive": "^2.4.1",
     "core-js": "3.15.2",
     "graphemer": "^1.2.0",
-    "lodash": "^4.17.21",
     "lru-cache": "^6.0.0"
   },
   "devDependencies": {
