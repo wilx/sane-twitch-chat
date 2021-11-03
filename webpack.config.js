@@ -1,6 +1,5 @@
 const path = require('path');
 const WebpackUserscript = require('webpack-userscript');
-const JsDocPlugin = require('jsdoc-webpack-plugin');
 
 module.exports = {
     mode: 'production',
@@ -19,6 +18,7 @@ module.exports = {
                 use: {
                     loader: 'babel-loader',
                     options: {
+                        //rootMode: "upward",
                         presets: [
                             [
                                 '@babel/preset-env',
@@ -67,9 +67,6 @@ module.exports = {
                 grant: 'none'
             },
             pretty: true
-        }),
-        new JsDocPlugin({
-            conf: path.join(__dirname, 'jsdoc.conf.json')
         })
     ],
     resolve: {

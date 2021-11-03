@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.323
+// @version     1.0.342
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -15,7 +15,7 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 640:
+/***/ 999:
 /***/ (() => {
 
 /*globals jQuery,Window,HTMLElement,HTMLDocument,HTMLCollection,NodeList,MutationObserver */
@@ -482,7 +482,7 @@ var Arrive = (function(window, $, undefined) {
 
 /***/ }),
 
-/***/ 553:
+/***/ 85:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -491,9 +491,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const boundaries_1 = __webpack_require__(658);
-const GraphemerHelper_1 = __importDefault(__webpack_require__(257));
-const GraphemerIterator_1 = __importDefault(__webpack_require__(670));
+const boundaries_1 = __webpack_require__(841);
+const GraphemerHelper_1 = __importDefault(__webpack_require__(565));
+const GraphemerIterator_1 = __importDefault(__webpack_require__(262));
 class Graphemer {
     /**
      * Returns the next grapheme break in the string after the given index
@@ -12260,18 +12260,18 @@ class Graphemer {
         return boundaries_1.CLUSTER_BREAK.OTHER;
     }
 }
-exports.default = Graphemer;
+exports["default"] = Graphemer;
 
 
 /***/ }),
 
-/***/ 257:
+/***/ 565:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const boundaries_1 = __webpack_require__(658);
+const boundaries_1 = __webpack_require__(841);
 // BreakTypes
 // @type {BreakType}
 const NotBreak = 0;
@@ -12437,12 +12437,12 @@ class GraphemerHelper {
         return BreakStart;
     }
 }
-exports.default = GraphemerHelper;
+exports["default"] = GraphemerHelper;
 
 
 /***/ }),
 
-/***/ 670:
+/***/ 262:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -12451,7 +12451,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const Graphemer_1 = __importDefault(__webpack_require__(553));
+const Graphemer_1 = __importDefault(__webpack_require__(85));
 /**
  * GraphemerIterator
  *
@@ -12484,12 +12484,12 @@ class GraphemerIterator {
         return { value: undefined, done: true };
     }
 }
-exports.default = GraphemerIterator;
+exports["default"] = GraphemerIterator;
 
 
 /***/ }),
 
-/***/ 658:
+/***/ 841:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -12535,7 +12535,7 @@ exports.EXTENDED_PICTOGRAPHIC = 101;
 
 /***/ }),
 
-/***/ 777:
+/***/ 861:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -12544,20 +12544,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const Graphemer_1 = __importDefault(__webpack_require__(553));
-exports.default = Graphemer_1.default;
+const Graphemer_1 = __importDefault(__webpack_require__(85));
+exports["default"] = Graphemer_1.default;
 
 
 /***/ }),
 
-/***/ 593:
+/***/ 127:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
 // A linked list to keep track of recently-used-ness
-const Yallist = __webpack_require__(411)
+const Yallist = __webpack_require__(866)
 
 const MAX = Symbol('max')
 const LENGTH = Symbol('length')
@@ -12892,7 +12892,7 @@ module.exports = LRUCache
 
 /***/ }),
 
-/***/ 602:
+/***/ 113:
 /***/ ((module) => {
 
 "use strict";
@@ -12908,7 +12908,7 @@ module.exports = function (Yallist) {
 
 /***/ }),
 
-/***/ 411:
+/***/ 866:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13336,7 +13336,7 @@ function Node (value, prev, next, list) {
 
 try {
   // add if support for Symbol.iterator is present
-  __webpack_require__(602)(Yallist)
+  __webpack_require__(113)(Yallist)
 } catch (er) {}
 
 
@@ -13403,11 +13403,11 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be in strict mode.
 (() => {
 "use strict";
-/* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(593);
+/* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(127);
 /* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(lru_cache__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(640);
+/* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(999);
 /* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(arrive__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(777);
+/* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(861);
 /* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(graphemer__WEBPACK_IMPORTED_MODULE_2__);
 
 
