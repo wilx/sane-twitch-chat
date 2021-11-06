@@ -1,6 +1,6 @@
 {
   "name": "sane-twitch-chat",
-  "version": "1.0.343",
+  "version": "1.0.345",
   "description": "Twitch chat sanitizer.",
   "license": "BSD-2-Clause",
   "homepage": "https://github.com/wilx/sane-twitch-chat",
@@ -21,6 +21,7 @@
   ],
   "dependencies": {
     "arrive": "^2.4.1",
+    "axios": "^0.24.0",
     "core-js": "3.19.1",
     "graphemer": "^1.2.0",
     "lru-cache": "^6.0.0"
@@ -44,7 +45,7 @@
     "babel-plugin-transform-simplify-comparison-operators": "^6.9.4",
     "browserslist": "^4.17.6",
     "chokidar": "^3.5.2",
-    "eslint": "^7.32.0",
+    "eslint": "^8.2.0",
     "eslint-config-standard": "^16.0.3",
     "eslint-import-resolver-node": "^0.3.6",
     "eslint-plugin-import": "^2.25.2",
@@ -71,10 +72,9 @@
     ]
   },
   "scripts": {
-    "build": "yarn version -i patch && yarn eslint src/** && yarn webpack",
+    "build": "yarn version --patch --no-commit-hooks --no-git-tag-version && yarn eslint src/** && yarn webpack",
     "build-compat": "BROWSERSLIST_ENV=compat yarn build",
-    "audit-html": "yarn npm audit --recursive --json | npm-audit-html -o -o output/sane-twitch-chat.audit.html"
+    "audit-html": "yarn audit --group \"dependencies bundledDependencies\" --json | yarn-audit-html -o output/sane-twitch-chat.audit.html"
   },
-  "babel": {},
-  "packageManager": "yarn@3.1.0"
+  "babel": {}
 }

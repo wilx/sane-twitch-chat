@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.343
+// @version     1.0.345
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -15,7 +15,7 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 999:
+/***/ 640:
 /***/ (() => {
 
 /*globals jQuery,Window,HTMLElement,HTMLDocument,HTMLCollection,NodeList,MutationObserver */
@@ -482,7 +482,7 @@ var Arrive = (function(window, $, undefined) {
 
 /***/ }),
 
-/***/ 85:
+/***/ 553:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -491,9 +491,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const boundaries_1 = __webpack_require__(841);
-const GraphemerHelper_1 = __importDefault(__webpack_require__(565));
-const GraphemerIterator_1 = __importDefault(__webpack_require__(262));
+const boundaries_1 = __webpack_require__(658);
+const GraphemerHelper_1 = __importDefault(__webpack_require__(257));
+const GraphemerIterator_1 = __importDefault(__webpack_require__(670));
 class Graphemer {
     /**
      * Returns the next grapheme break in the string after the given index
@@ -12265,13 +12265,13 @@ exports["default"] = Graphemer;
 
 /***/ }),
 
-/***/ 565:
+/***/ 257:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const boundaries_1 = __webpack_require__(841);
+const boundaries_1 = __webpack_require__(658);
 // BreakTypes
 // @type {BreakType}
 const NotBreak = 0;
@@ -12442,7 +12442,7 @@ exports["default"] = GraphemerHelper;
 
 /***/ }),
 
-/***/ 262:
+/***/ 670:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -12451,7 +12451,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const Graphemer_1 = __importDefault(__webpack_require__(85));
+const Graphemer_1 = __importDefault(__webpack_require__(553));
 /**
  * GraphemerIterator
  *
@@ -12489,7 +12489,7 @@ exports["default"] = GraphemerIterator;
 
 /***/ }),
 
-/***/ 841:
+/***/ 658:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -12535,7 +12535,7 @@ exports.EXTENDED_PICTOGRAPHIC = 101;
 
 /***/ }),
 
-/***/ 861:
+/***/ 777:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -12544,20 +12544,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const Graphemer_1 = __importDefault(__webpack_require__(85));
+const Graphemer_1 = __importDefault(__webpack_require__(553));
 exports["default"] = Graphemer_1.default;
 
 
 /***/ }),
 
-/***/ 127:
+/***/ 593:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
 // A linked list to keep track of recently-used-ness
-const Yallist = __webpack_require__(866)
+const Yallist = __webpack_require__(411)
 
 const MAX = Symbol('max')
 const LENGTH = Symbol('length')
@@ -12892,7 +12892,7 @@ module.exports = LRUCache
 
 /***/ }),
 
-/***/ 113:
+/***/ 602:
 /***/ ((module) => {
 
 "use strict";
@@ -12908,7 +12908,7 @@ module.exports = function (Yallist) {
 
 /***/ }),
 
-/***/ 866:
+/***/ 411:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13336,7 +13336,7 @@ function Node (value, prev, next, list) {
 
 try {
   // add if support for Symbol.iterator is present
-  __webpack_require__(113)(Yallist)
+  __webpack_require__(602)(Yallist)
 } catch (er) {}
 
 
@@ -13403,11 +13403,11 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be in strict mode.
 (() => {
 "use strict";
-/* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(127);
+/* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(593);
 /* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(lru_cache__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(999);
+/* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(640);
 /* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(arrive__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(861);
+/* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(777);
 /* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(graphemer__WEBPACK_IMPORTED_MODULE_2__);
 
 
