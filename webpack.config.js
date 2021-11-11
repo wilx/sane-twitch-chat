@@ -18,7 +18,6 @@ module.exports = {
                 use: {
                     loader: 'babel-loader',
                     options: {
-                        //rootMode: "upward",
                         presets: [
                             [
                                 '@babel/preset-env',
@@ -31,6 +30,7 @@ module.exports = {
                             ]
                         ],
                         plugins: [
+                            '@babel/plugin-transform-runtime',
                             // 'babel-plugin-minify-constant-folding',
                             'babel-plugin-minify-guarded-expressions',
                             ['babel-plugin-transform-remove-undefined', {
