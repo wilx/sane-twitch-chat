@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.354
+// @version     1.0.355
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -13311,7 +13311,7 @@ const FAST_CHAT_CACHE_TIMEOUT = 2_500;
  * Unlimitted cache size for fast messages.
  */
 
-const FAST_CHAT_CACHE_SIZE = 0;
+const FAST_CHAT_CACHE_SIZE = 5000;
 /**
  * This determines timeout of how long will long messages / copy-pastas be kept in cache.
  */
@@ -13321,7 +13321,7 @@ const LONG_CHAT_CACHE_TIMEOUT = 60 * 1_000;
  * Unlimitted cache size for long messages.
  */
 
-const LONG_CHAT_CACHE_SIZE = 0;
+const LONG_CHAT_CACHE_SIZE = 1000;
 /**
  * This determines what is considered a long message / copy-pasta.
  */
