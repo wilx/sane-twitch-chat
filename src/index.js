@@ -70,14 +70,16 @@ class SaneTwitchChat {
 
     #fastChatCache = new LRUCache({
         max: FAST_CHAT_CACHE_SIZE,
-        maxAge: FAST_CHAT_CACHE_TIMEOUT,
-        length: () => 1
+        ttl: FAST_CHAT_CACHE_TIMEOUT,
+        updateAgeOnGet: true,
+        ttlResolution: 100
     });
 
     #longChatCache = new LRUCache({
         max: LONG_CHAT_CACHE_SIZE,
-        maxAge: LONG_CHAT_CACHE_TIMEOUT,
-        length: () => 1
+        ttl: LONG_CHAT_CACHE_TIMEOUT,
+        updateAgeOnGet: true,
+        ttlResolution: 1_000
     });
 
     async #hideNode (msgNode) {
