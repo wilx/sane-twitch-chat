@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.355
+// @version     1.0.356
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -12648,33 +12648,55 @@ exports["default"] = Graphemer_1.default;
 const perf = typeof performance === 'object' && performance &&
   typeof performance.now === 'function' ? performance : Date
 
+const hasAbortController = typeof AbortController !== 'undefined'
+
+// minimal backwards-compatibility polyfill
+const AC = hasAbortController ? AbortController : Object.assign(
+  class AbortController {
+    constructor () { this.signal = new AC.AbortSignal }
+    abort () { this.signal.aborted = true }
+  },
+  { AbortSignal: class AbortSignal { constructor () { this.aborted = false }}}
+)
+
 const warned = new Set()
-const deprecatedOption = (opt, msg) => {
+const deprecatedOption = (opt, instead) => {
   const code = `LRU_CACHE_OPTION_${opt}`
   if (shouldWarn(code)) {
-    warn(code, `The ${opt} option is deprecated. ${msg}`, LRUCache)
+    warn(code, `${opt} option`, `options.${instead}`, LRUCache)
   }
 }
-const deprecatedMethod = (method, msg) => {
+const deprecatedMethod = (method, instead) => {
   const code = `LRU_CACHE_METHOD_${method}`
   if (shouldWarn(code)) {
     const { prototype } = LRUCache
     const { get } = Object.getOwnPropertyDescriptor(prototype, method)
-    warn(code, `The ${method} method is deprecated. ${msg}`, get)
+    warn(code, `${method} method`, `cache.${instead}()`, get)
   }
 }
-const deprecatedProperty = (field, msg) => {
+const deprecatedProperty = (field, instead) => {
   const code = `LRU_CACHE_PROPERTY_${field}`
   if (shouldWarn(code)) {
     const { prototype } = LRUCache
     const { get } = Object.getOwnPropertyDescriptor(prototype, field)
-    warn(code, `The ${field} property is deprecated. ${msg}`, get)
+    warn(code, `${field} property`, `cache.${instead}`, get)
   }
 }
-const shouldWarn = (code) => !(process.noDeprecation || warned.has(code))
-const warn = (code, msg, fn) => {
+
+const emitWarning = (...a) => {
+  typeof process === 'object' &&
+    process &&
+    typeof process.emitWarning === 'function'
+  ? process.emitWarning(...a)
+  : console.error(...a)
+}
+
+const shouldWarn = code => !warned.has(code)
+
+const warn = (code, what, instead, fn) => {
   warned.add(code)
-  process.emitWarning(msg, 'DeprecationWarning', code, fn)
+  const msg = `The ${what} is deprecated. Please use ${instead} instead.`
+  emitWarning(msg, 'DeprecationWarning', code, fn)
 }
 
 const isPosInt = n => n && n === Math.floor(n) && n > 0 && isFinite(n)
@@ -12703,7 +12725,7 @@ class ZeroArray extends Array {
 
 class Stack {
   constructor (max) {
-    const UintArray = getUintArray(max)
+    const UintArray = max ? getUintArray(max) : Array
     this.heap = new UintArray(max)
     this.length = 0
   }
@@ -12718,17 +12740,20 @@ class Stack {
 class LRUCache {
   constructor (options = {}) {
     const {
-      max,
+      max = 0,
       ttl,
       ttlResolution = 1,
       ttlAutopurge,
       updateAgeOnGet,
+      updateAgeOnHas,
       allowStale,
       dispose,
       disposeAfter,
       noDisposeOnSet,
-      maxSize,
+      noUpdateTTL,
+      maxSize = 0,
       sizeCalculation,
+      fetchMethod,
     } = options
 
     // deprecated options, don't trigger a warning for getting them if
@@ -12739,26 +12764,33 @@ class LRUCache {
       stale,
     } = options instanceof LRUCache ? {} : options
 
-    if (!isPosInt(max)) {
-      throw new TypeError('max option must be an integer')
+    if (max !== 0 && !isPosInt(max)) {
+      throw new TypeError('max option must be a nonnegative integer')
     }
 
-    const UintArray = getUintArray(max)
+    const UintArray = max ? getUintArray(max) : Array
     if (!UintArray) {
       throw new Error('invalid max value: ' + max)
     }
 
     this.max = max
-    this.maxSize = maxSize || 0
+    this.maxSize = maxSize
     this.sizeCalculation = sizeCalculation || length
     if (this.sizeCalculation) {
       if (!this.maxSize) {
         throw new TypeError('cannot set sizeCalculation without setting maxSize')
       }
       if (typeof this.sizeCalculation !== 'function') {
-        throw new TypeError('sizeCalculating set to non-function')
+        throw new TypeError('sizeCalculation set to non-function')
       }
     }
+
+    this.fetchMethod = fetchMethod || null
+    if (this.fetchMethod && typeof this.fetchMethod !== 'function') {
+      throw new TypeError('fetchMethod must be a function if specified')
+    }
+
+
     this.keyMap = new Map()
     this.keyList = new Array(max).fill(null)
     this.valList = new Array(max).fill(null)
@@ -12781,8 +12813,9 @@ class LRUCache {
       this.disposed = null
     }
     this.noDisposeOnSet = !!noDisposeOnSet
+    this.noUpdateTTL = !!noUpdateTTL
 
-    if (this.maxSize) {
+    if (this.maxSize !== 0) {
       if (!isPosInt(this.maxSize)) {
         throw new TypeError('maxSize must be a positive integer if specified')
       }
@@ -12791,6 +12824,7 @@ class LRUCache {
 
     this.allowStale = !!allowStale || !!stale
     this.updateAgeOnGet = !!updateAgeOnGet
+    this.updateAgeOnHas = !!updateAgeOnHas
     this.ttlResolution = isPosInt(ttlResolution) || ttlResolution === 0
       ? ttlResolution : 1
     this.ttlAutopurge = !!ttlAutopurge
@@ -12802,20 +12836,39 @@ class LRUCache {
       this.initializeTTLTracking()
     }
 
+    // do not allow completely unbounded caches
+    if (this.max === 0 && this.ttl === 0 && this.maxSize === 0) {
+      throw new TypeError('At least one of max, maxSize, or ttl is required')
+    }
+    if (!this.ttlAutopurge && !this.max && !this.maxSize) {
+      const code = 'LRU_CACHE_UNBOUNDED'
+      if (shouldWarn(code)) {
+        warned.add(code)
+        const msg = 'TTL caching without ttlAutopurge, max, or maxSize can ' +
+          'result in unbounded memory consumption.'
+        emitWarning(msg, 'UnboundedCacheWarning', code, LRUCache)
+      }
+    }
+
     if (stale) {
-      deprecatedOption('stale', 'please use options.allowStale instead')
+      deprecatedOption('stale', 'allowStale')
     }
     if (maxAge) {
-      deprecatedOption('maxAge', 'please use options.ttl instead')
+      deprecatedOption('maxAge', 'ttl')
     }
     if (length) {
-      deprecatedOption('length', 'please use options.sizeCalculation instead')
+      deprecatedOption('length', 'sizeCalculation')
     }
+  }
+
+  getRemainingTTL (key) {
+    return this.has(key, { updateAgeOnHas: false }) ? Infinity : 0
   }
 
   initializeTTLTracking () {
     this.ttls = new ZeroArray(this.max)
     this.starts = new ZeroArray(this.max)
+
     this.setItemTTL = (index, ttl) => {
       this.starts[index] = ttl !== 0 ? perf.now() : 0
       this.ttls[index] = ttl
@@ -12831,9 +12884,11 @@ class LRUCache {
         }
       }
     }
+
     this.updateItemAge = (index) => {
       this.starts[index] = this.ttls[index] !== 0 ? perf.now() : 0
     }
+
     // debounce calls to perf.now() to 1s so we're not hitting
     // that costly call repeatedly.
     let cachedNow = 0
@@ -12849,6 +12904,16 @@ class LRUCache {
       }
       return n
     }
+
+    this.getRemainingTTL = (key) => {
+      const index = this.keyMap.get(key)
+      if (index === undefined) {
+        return 0
+      }
+      return this.ttls[index] === 0 || this.starts[index] === 0 ? Infinity
+        : ((this.starts[index] + this.ttls[index]) - (cachedNow || getNow()))
+    }
+
     this.isStale = (index) => {
       return this.ttls[index] !== 0 && this.starts[index] !== 0 &&
         ((cachedNow || getNow()) - this.starts[index] > this.ttls[index])
@@ -12862,9 +12927,24 @@ class LRUCache {
     this.calculatedSize = 0
     this.sizes = new ZeroArray(this.max)
     this.removeItemSize = index => this.calculatedSize -= this.sizes[index]
-    this.addItemSize = (index, v, k, size, sizeCalculation) => {
-      const s = size || (sizeCalculation ? sizeCalculation(v, k) : 0)
-      this.sizes[index] = isPosInt(s) ? s : 0
+    this.requireSize = (k, v, size, sizeCalculation) => {
+      if (!isPosInt(size)) {
+        if (sizeCalculation) {
+          if (typeof sizeCalculation !== 'function') {
+            throw new TypeError('sizeCalculation must be a function')
+          }
+          size = sizeCalculation(v, k)
+          if (!isPosInt(size)) {
+            throw new TypeError('sizeCalculation return invalid (expect positive integer)')
+          }
+        } else {
+          throw new TypeError('invalid size value (must be positive integer)')
+        }
+      }
+      return size
+    }
+    this.addItemSize = (index, v, k, size) => {
+      this.sizes[index] = size
       const maxSize = this.maxSize - this.sizes[index]
       while (this.calculatedSize > maxSize) {
         this.evict()
@@ -12882,35 +12962,60 @@ class LRUCache {
     }
   }
   removeItemSize (index) {}
-  addItemSize (index, v, k, size, sizeCalculation) {}
+  addItemSize (index, v, k, size) {}
+  requireSize (k, v, size, sizeCalculation) {
+    if (size || sizeCalculation) {
+      throw new TypeError('cannot set size without setting maxSize on cache')
+    }
+  }
 
-  *indexes () {
+  *indexes ({ allowStale = this.allowStale } = {}) {
     if (this.size) {
-      for (let i = this.tail; true; i = this.prev[i]) {
-        if (!this.isStale(i)) {
+      for (let i = this.tail; true; ) {
+        if (!this.isValidIndex(i)) {
+          break
+        }
+        if (allowStale || !this.isStale(i)) {
           yield i
         }
         if (i === this.head) {
           break
-        }
-      }
-    }
-  }
-  *rindexes () {
-    if (this.size) {
-      for (let i = this.head; true; i = this.next[i]) {
-        if (!this.isStale(i)) {
-          yield i
-        }
-        if (i === this.tail) {
-          break
+        } else {
+          i = this.prev[i]
         }
       }
     }
   }
 
+  *rindexes ({ allowStale = this.allowStale } = {}) {
+    if (this.size) {
+      for (let i = this.head; true; ) {
+        if (!this.isValidIndex(i)) {
+          break
+        }
+        if (allowStale || !this.isStale(i)) {
+          yield i
+        }
+        if (i === this.tail) {
+          break
+        } else {
+          i = this.next[i]
+        }
+      }
+    }
+  }
+
+  isValidIndex (index) {
+    return this.keyMap.get(this.keyList[index]) === index
+  }
+
   *entries () {
     for (const i of this.indexes()) {
+      yield [this.keyList[i], this.valList[i]]
+    }
+  }
+  *rentries () {
+    for (const i of this.rindexes()) {
       yield [this.keyList[i], this.valList[i]]
     }
   }
@@ -12920,9 +13025,19 @@ class LRUCache {
       yield this.keyList[i]
     }
   }
+  *rkeys () {
+    for (const i of this.rindexes()) {
+      yield this.keyList[i]
+    }
+  }
 
   *values () {
     for (const i of this.indexes()) {
+      yield this.valList[i]
+    }
+  }
+  *rvalues () {
+    for (const i of this.rindexes()) {
       yield this.valList[i]
     }
   }
@@ -12952,22 +13067,16 @@ class LRUCache {
   }
 
   get prune () {
-    deprecatedMethod('prune', 'Please use cache.purgeStale() instead.')
+    deprecatedMethod('prune', 'purgeStale')
     return this.purgeStale
   }
 
   purgeStale () {
     let deleted = false
-    if (this.size) {
-      for (let i = this.head; true; i = this.next[i]) {
-        const b = i === this.tail
-        if (this.isStale(i)) {
-          this.delete(this.keyList[i])
-          deleted = true
-        }
-        if (b) {
-          break
-        }
+    for (const i of this.rindexes({ allowStale: true })) {
+      if (this.isStale(i)) {
+        this.delete(this.keyList[i])
+        deleted = true
       }
     }
     return deleted
@@ -13004,7 +13113,9 @@ class LRUCache {
     noDisposeOnSet = this.noDisposeOnSet,
     size = 0,
     sizeCalculation = this.sizeCalculation,
+    noUpdateTTL = this.noUpdateTTL,
   } = {}) {
+    size = this.requireSize(k, v, size, sizeCalculation)
     let index = this.size === 0 ? undefined : this.keyMap.get(k)
     if (index === undefined) {
       // addition
@@ -13016,27 +13127,34 @@ class LRUCache {
       this.prev[index] = this.tail
       this.tail = index
       this.size ++
-      this.addItemSize(index, v, k, size, sizeCalculation)
+      this.addItemSize(index, v, k, size)
+      noUpdateTTL = false
     } else {
       // update
       const oldVal = this.valList[index]
       if (v !== oldVal) {
-        if (!noDisposeOnSet) {
-          this.dispose(oldVal, k, 'set')
-          if (this.disposeAfter) {
-            this.disposed.push([oldVal, k, 'set'])
+        if (this.isBackgroundFetch(oldVal)) {
+          oldVal.__abortController.abort()
+        } else {
+          if (!noDisposeOnSet) {
+            this.dispose(oldVal, k, 'set')
+            if (this.disposeAfter) {
+              this.disposed.push([oldVal, k, 'set'])
+            }
           }
         }
         this.removeItemSize(index)
         this.valList[index] = v
-        this.addItemSize(index, v, k, size, sizeCalculation)
+        this.addItemSize(index, v, k, size)
       }
       this.moveToTail(index)
     }
     if (ttl !== 0 && this.ttl === 0 && !this.ttls) {
       this.initializeTTLTracking()
     }
-    this.setItemTTL(index, ttl)
+    if (!noUpdateTTL) {
+      this.setItemTTL(index, ttl)
+    }
     if (this.disposeAfter) {
       while (this.disposed.length) {
         this.disposeAfter(...this.disposed.shift())
@@ -13071,9 +13189,13 @@ class LRUCache {
     const head = this.head
     const k = this.keyList[head]
     const v = this.valList[head]
-    this.dispose(v, k, 'evict')
-    if (this.disposeAfter) {
-      this.disposed.push([v, k, 'evict'])
+    if (this.isBackgroundFetch(v)) {
+      v.__abortController.abort()
+    } else {
+      this.dispose(v, k, 'evict')
+      if (this.disposeAfter) {
+        this.disposed.push([v, k, 'evict'])
+      }
     }
     this.removeItemSize(head)
     this.head = this.next[head]
@@ -13082,8 +13204,17 @@ class LRUCache {
     return head
   }
 
-  has (k) {
-    return this.keyMap.has(k) && !this.isStale(this.keyMap.get(k))
+  has (k, { updateAgeOnHas = this.updateAgeOnHas } = {}) {
+    const index = this.keyMap.get(k)
+    if (index !== undefined) {
+      if (!this.isStale(index)) {
+        if (updateAgeOnHas) {
+          this.updateItemAge(index)
+        }
+        return true
+      }
+    }
+    return false
   }
 
   // like get(), but without any LRU updating or TTL expiration
@@ -13094,22 +13225,117 @@ class LRUCache {
     }
   }
 
+  backgroundFetch (k, index, options) {
+    const v = index === undefined ? undefined : this.valList[index]
+    if (this.isBackgroundFetch(v)) {
+      return v
+    }
+    const ac = new AC()
+    const fetchOpts = {
+      signal: ac.signal,
+      options,
+    }
+    const p = Promise.resolve(this.fetchMethod(k, v, fetchOpts)).then(v => {
+      if (!ac.signal.aborted) {
+        this.set(k, v, fetchOpts.options)
+      }
+      return v
+    })
+    p.__abortController = ac
+    p.__staleWhileFetching = v
+    if (index === undefined) {
+      this.set(k, p, fetchOpts.options)
+      index = this.keyMap.get(k)
+    } else {
+      this.valList[index] = p
+    }
+    return p
+  }
+
+  isBackgroundFetch (p) {
+    return p && typeof p === 'object' && typeof p.then === 'function' &&
+      Object.prototype.hasOwnProperty.call(p, '__staleWhileFetching')
+  }
+
+  // this takes the union of get() and set() opts, because it does both
+  async fetch (k, {
+    allowStale = this.allowStale,
+    updateAgeOnGet = this.updateAgeOnGet,
+    ttl = this.ttl,
+    noDisposeOnSet = this.noDisposeOnSet,
+    size = 0,
+    sizeCalculation = this.sizeCalculation,
+    noUpdateTTL = this.noUpdateTTL,
+  } = {}) {
+    if (!this.fetchMethod) {
+      return this.get(k, {allowStale, updateAgeOnGet})
+    }
+
+    const options = {
+      allowStale,
+      updateAgeOnGet,
+      ttl,
+      noDisposeOnSet,
+      size,
+      sizeCalculation,
+      noUpdateTTL,
+    }
+
+    let index = this.keyMap.get(k)
+    if (index === undefined) {
+      return this.backgroundFetch(k, index, options)
+    } else {
+      // in cache, maybe already fetching
+      const v = this.valList[index]
+      if (this.isBackgroundFetch(v)) {
+        return allowStale && v.__staleWhileFetching !== undefined
+          ? v.__staleWhileFetching : v
+      }
+
+      if (!this.isStale(index)) {
+        this.moveToTail(index)
+        if (updateAgeOnGet) {
+          this.updateItemAge(index)
+        }
+        return v
+      }
+
+      // ok, it is stale, and not already fetching
+      // refresh the cache.
+      const p = this.backgroundFetch(k, index, options)
+      return allowStale && p.__staleWhileFetching !== undefined
+        ? p.__staleWhileFetching : p
+    }
+  }
+
   get (k, {
     allowStale = this.allowStale,
     updateAgeOnGet = this.updateAgeOnGet,
   } = {}) {
     const index = this.keyMap.get(k)
     if (index !== undefined) {
+      const value = this.valList[index]
+      const fetching = this.isBackgroundFetch(value)
       if (this.isStale(index)) {
-        const value = allowStale ? this.valList[index] : undefined
-        this.delete(k)
-        return value
+        // delete only if not an in-flight background fetch
+        if (!fetching) {
+          this.delete(k)
+          return allowStale ? value : undefined
+        } else {
+          return allowStale ? value.__staleWhileFetching : undefined
+        }
       } else {
+        // if we're currently fetching it, we don't actually have it yet
+        // it's not stale, which means this isn't a staleWhileRefetching,
+        // so we just return undefined
+        if (fetching) {
+          return undefined
+        }
         this.moveToTail(index)
         if (updateAgeOnGet) {
           this.updateItemAge(index)
         }
-        return this.valList[index]
+        return value
       }
     }
   }
@@ -13140,7 +13366,7 @@ class LRUCache {
   }
 
   get del () {
-    deprecatedMethod('del', 'Please use cache.delete() instead.')
+    deprecatedMethod('del', 'delete')
     return this.delete
   }
   delete (k) {
@@ -13153,9 +13379,14 @@ class LRUCache {
           this.clear()
         } else {
           this.removeItemSize(index)
-          this.dispose(this.valList[index], k, 'delete')
-          if (this.disposeAfter) {
-            this.disposed.push([this.valList[index], k, 'delete'])
+          const v = this.valList[index]
+          if (this.isBackgroundFetch(v)) {
+            v.__abortController.abort()
+          } else {
+            this.dispose(v, k, 'delete')
+            if (this.disposeAfter) {
+              this.disposed.push([v, k, 'delete'])
+            }
           }
           this.keyMap.delete(k)
           this.keyList[index] = null
@@ -13182,16 +13413,19 @@ class LRUCache {
   }
 
   clear () {
-    if (this.dispose !== LRUCache.prototype.dispose) {
-      for (const index of this.rindexes()) {
-        this.dispose(this.valList[index], this.keyList[index], 'delete')
+    for (const index of this.rindexes({ allowStale: true })) {
+      const v = this.valList[index]
+      if (this.isBackgroundFetch(v)) {
+        v.__abortController.abort()
+      } else {
+        const k = this.keyList[index]
+        this.dispose(v, k, 'delete')
+        if (this.disposeAfter) {
+          this.disposed.push([v, k, 'delete'])
+        }
       }
     }
-    if (this.disposeAfter) {
-      for (const index of this.rindexes()) {
-        this.disposed.push([this.valList[index], this.keyList[index], 'delete'])
-      }
-    }
+
     this.keyMap.clear()
     this.valList.fill(null)
     this.keyList.fill(null)
@@ -13215,12 +13449,12 @@ class LRUCache {
     }
   }
   get reset () {
-    deprecatedMethod('reset', 'Please use cache.clear() instead.')
+    deprecatedMethod('reset', 'clear')
     return this.clear
   }
 
   get length () {
-    deprecatedProperty('length', 'Please use cache.size instead.')
+    deprecatedProperty('length', 'size')
     return this.size
   }
 }
