@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.365
+// @version     1.0.368
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -12669,8 +12669,13 @@ const AC = hasAbortController
       }
     }
 
-const AS = hasAbortController
+const hasAbortSignal = typeof AbortSignal === 'function'
+// Some polyfills put this on the AC class, not global
+const hasACAbortSignal = typeof AC.AbortSignal === 'function'
+const AS = hasAbortSignal
   ? AbortSignal
+  : hasACAbortSignal
+  ? AC.AbortController
   : class AbortSignal {
       constructor() {
         this.aborted = false
@@ -12801,7 +12806,9 @@ class LRUCache {
       maxSize = 0,
       sizeCalculation,
       fetchMethod,
+      fetchContext,
       noDeleteOnFetchRejection,
+      noDeleteOnStaleGet,
     } = options
 
     // deprecated options, don't trigger a warning for getting them if
@@ -12836,6 +12843,13 @@ class LRUCache {
     if (this.fetchMethod && typeof this.fetchMethod !== 'function') {
       throw new TypeError(
         'fetchMethod must be a function if specified'
+      )
+    }
+
+    this.fetchContext = fetchContext
+    if (!this.fetchMethod && fetchContext !== undefined) {
+      throw new TypeError(
+        'cannot set fetchContext without fetchMethod'
       )
     }
 
@@ -12874,6 +12888,7 @@ class LRUCache {
     }
 
     this.allowStale = !!allowStale || !!stale
+    this.noDeleteOnStaleGet = !!noDeleteOnStaleGet
     this.updateAgeOnGet = !!updateAgeOnGet
     this.updateAgeOnHas = !!updateAgeOnHas
     this.ttlResolution =
@@ -12927,8 +12942,8 @@ class LRUCache {
     this.ttls = new ZeroArray(this.max)
     this.starts = new ZeroArray(this.max)
 
-    this.setItemTTL = (index, ttl) => {
-      this.starts[index] = ttl !== 0 ? perf.now() : 0
+    this.setItemTTL = (index, ttl, start = perf.now()) => {
+      this.starts[index] = ttl !== 0 ? start : 0
       this.ttls[index] = ttl
       if (ttl !== 0 && this.ttlAutopurge) {
         const t = setTimeout(() => {
@@ -12988,7 +13003,7 @@ class LRUCache {
     }
   }
   updateItemAge(index) {}
-  setItemTTL(index, ttl) {}
+  setItemTTL(index, ttl, start) {}
   isStale(index) {
     return false
   }
@@ -13152,12 +13167,17 @@ class LRUCache {
 
   dump() {
     const arr = []
-    for (const i of this.indexes()) {
+    for (const i of this.indexes({ allowStale: true })) {
       const key = this.keyList[i]
-      const value = this.valList[i]
+      const v = this.valList[i]
+      const value = this.isBackgroundFetch(v) ? v.__staleWhileFetching : v
       const entry = { value }
       if (this.ttls) {
         entry.ttl = this.ttls[i]
+        // always dump the start relative to a portable timestamp
+        // it's ok for this to be a bit slow, it's a rare operation.
+        const age = perf.now() - this.starts[i]
+        entry.start = Math.floor(Date.now() - age)
       }
       if (this.sizes) {
         entry.size = this.sizes[i]
@@ -13170,6 +13190,13 @@ class LRUCache {
   load(arr) {
     this.clear()
     for (const [key, entry] of arr) {
+      if (entry.start) {
+        // entry.start is a portable timestamp, but we may be using
+        // node's performance.now(), so calculate the offset.
+        // it's ok for this to be a bit slow, it's a rare operation.
+        const age = Date.now() - entry.start
+        entry.start = perf.now() - age
+      }
       this.set(key, entry.value, entry)
     }
   }
@@ -13181,6 +13208,7 @@ class LRUCache {
     v,
     {
       ttl = this.ttl,
+      start,
       noDisposeOnSet = this.noDisposeOnSet,
       size = 0,
       sizeCalculation = this.sizeCalculation,
@@ -13225,7 +13253,7 @@ class LRUCache {
       this.initializeTTLTracking()
     }
     if (!noUpdateTTL) {
-      this.setItemTTL(index, ttl)
+      this.setItemTTL(index, ttl, start)
     }
     if (this.disposeAfter) {
       while (this.disposed.length) {
@@ -13303,7 +13331,7 @@ class LRUCache {
     }
   }
 
-  backgroundFetch(k, index, options) {
+  backgroundFetch(k, index, options, context) {
     const v = index === undefined ? undefined : this.valList[index]
     if (this.isBackgroundFetch(v)) {
       return v
@@ -13312,6 +13340,7 @@ class LRUCache {
     const fetchOpts = {
       signal: ac.signal,
       options,
+      context,
     }
     const cb = v => {
       if (!ac.signal.aborted) {
@@ -13371,6 +13400,7 @@ class LRUCache {
       // get options
       allowStale = this.allowStale,
       updateAgeOnGet = this.updateAgeOnGet,
+      noDeleteOnStaleGet = this.noDeleteOnStaleGet,
       // set options
       ttl = this.ttl,
       noDisposeOnSet = this.noDisposeOnSet,
@@ -13379,15 +13409,17 @@ class LRUCache {
       noUpdateTTL = this.noUpdateTTL,
       // fetch exclusive options
       noDeleteOnFetchRejection = this.noDeleteOnFetchRejection,
+      fetchContext = this.fetchContext,
     } = {}
   ) {
     if (!this.fetchMethod) {
-      return this.get(k, { allowStale, updateAgeOnGet })
+      return this.get(k, { allowStale, updateAgeOnGet, noDeleteOnStaleGet })
     }
 
     const options = {
       allowStale,
       updateAgeOnGet,
+      noDeleteOnStaleGet,
       ttl,
       noDisposeOnSet,
       size,
@@ -13398,7 +13430,7 @@ class LRUCache {
 
     let index = this.keyMap.get(k)
     if (index === undefined) {
-      const p = this.backgroundFetch(k, index, options)
+      const p = this.backgroundFetch(k, index, options, fetchContext)
       return (p.__returned = p)
     } else {
       // in cache, maybe already fetching
@@ -13419,7 +13451,7 @@ class LRUCache {
 
       // ok, it is stale, and not already fetching
       // refresh the cache.
-      const p = this.backgroundFetch(k, index, options)
+      const p = this.backgroundFetch(k, index, options, fetchContext)
       return allowStale && p.__staleWhileFetching !== undefined
         ? p.__staleWhileFetching
         : (p.__returned = p)
@@ -13431,6 +13463,7 @@ class LRUCache {
     {
       allowStale = this.allowStale,
       updateAgeOnGet = this.updateAgeOnGet,
+      noDeleteOnStaleGet = this.noDeleteOnStaleGet,
     } = {}
   ) {
     const index = this.keyMap.get(k)
@@ -13440,7 +13473,9 @@ class LRUCache {
       if (this.isStale(index)) {
         // delete only if not an in-flight background fetch
         if (!fetching) {
-          this.delete(k)
+          if (!noDeleteOnStaleGet) {
+            this.delete(k)
+          }
           return allowStale ? value : undefined
         } else {
           return allowStale ? value.__staleWhileFetching : undefined
