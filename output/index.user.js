@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.368
+// @version     1.0.369
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -13011,8 +13011,10 @@ class LRUCache {
   initializeSizeTracking() {
     this.calculatedSize = 0
     this.sizes = new ZeroArray(this.max)
-    this.removeItemSize = index =>
-      (this.calculatedSize -= this.sizes[index])
+    this.removeItemSize = index => {
+      this.calculatedSize -= this.sizes[index]
+      this.sizes[index] = 0
+    }
     this.requireSize = (k, v, size, sizeCalculation) => {
       if (!isPosInt(size)) {
         if (sizeCalculation) {
@@ -13033,7 +13035,7 @@ class LRUCache {
       }
       return size
     }
-    this.addItemSize = (index, v, k, size) => {
+    this.addItemSize = (index, size) => {
       this.sizes[index] = size
       const maxSize = this.maxSize - this.sizes[index]
       while (this.calculatedSize > maxSize) {
@@ -13043,7 +13045,7 @@ class LRUCache {
     }
   }
   removeItemSize(index) {}
-  addItemSize(index, v, k, size) {}
+  addItemSize(index, size) {}
   requireSize(k, v, size, sizeCalculation) {
     if (size || sizeCalculation) {
       throw new TypeError(
@@ -13170,7 +13172,9 @@ class LRUCache {
     for (const i of this.indexes({ allowStale: true })) {
       const key = this.keyList[i]
       const v = this.valList[i]
-      const value = this.isBackgroundFetch(v) ? v.__staleWhileFetching : v
+      const value = this.isBackgroundFetch(v)
+        ? v.__staleWhileFetching
+        : v
       const entry = { value }
       if (this.ttls) {
         entry.ttl = this.ttls[i]
@@ -13216,6 +13220,10 @@ class LRUCache {
     } = {}
   ) {
     size = this.requireSize(k, v, size, sizeCalculation)
+    // if the item doesn't fit, don't do anything
+    if (this.maxSize && size > this.maxSize) {
+      return this
+    }
     let index = this.size === 0 ? undefined : this.keyMap.get(k)
     if (index === undefined) {
       // addition
@@ -13227,7 +13235,7 @@ class LRUCache {
       this.prev[index] = this.tail
       this.tail = index
       this.size++
-      this.addItemSize(index, v, k, size)
+      this.addItemSize(index, size)
       noUpdateTTL = false
     } else {
       // update
@@ -13245,7 +13253,7 @@ class LRUCache {
         }
         this.removeItemSize(index)
         this.valList[index] = v
-        this.addItemSize(index, v, k, size)
+        this.addItemSize(index, size)
       }
       this.moveToTail(index)
     }
@@ -13327,7 +13335,9 @@ class LRUCache {
   peek(k, { allowStale = this.allowStale } = {}) {
     const index = this.keyMap.get(k)
     if (index !== undefined && (allowStale || !this.isStale(index))) {
-      return this.valList[index]
+      const v = this.valList[index]
+      // either stale and allowed, or forcing a refresh of non-stale value
+      return this.isBackgroundFetch(v) ? v.__staleWhileFetching : v
     }
   }
 
@@ -13410,10 +13420,15 @@ class LRUCache {
       // fetch exclusive options
       noDeleteOnFetchRejection = this.noDeleteOnFetchRejection,
       fetchContext = this.fetchContext,
+      forceRefresh = false,
     } = {}
   ) {
     if (!this.fetchMethod) {
-      return this.get(k, { allowStale, updateAgeOnGet, noDeleteOnStaleGet })
+      return this.get(k, {
+        allowStale,
+        updateAgeOnGet,
+        noDeleteOnStaleGet,
+      })
     }
 
     const options = {
@@ -13441,7 +13456,9 @@ class LRUCache {
           : (v.__returned = v)
       }
 
-      if (!this.isStale(index)) {
+      // if we force a refresh, that means do NOT serve the cached value,
+      // unless we are already in the process of refreshing the cache.
+      if (!forceRefresh && !this.isStale(index)) {
         this.moveToTail(index)
         if (updateAgeOnGet) {
           this.updateItemAge(index)
@@ -13449,7 +13466,7 @@ class LRUCache {
         return v
       }
 
-      // ok, it is stale, and not already fetching
+      // ok, it is stale or a forced refresh, and not already fetching.
       // refresh the cache.
       const p = this.backgroundFetch(k, index, options, fetchContext)
       return allowStale && p.__staleWhileFetching !== undefined
