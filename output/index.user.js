@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.369
+// @version     1.0.375
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -12804,6 +12804,7 @@ class LRUCache {
       noDisposeOnSet,
       noUpdateTTL,
       maxSize = 0,
+      maxEntrySize = 0,
       sizeCalculation,
       fetchMethod,
       fetchContext,
@@ -12827,11 +12828,12 @@ class LRUCache {
 
     this.max = max
     this.maxSize = maxSize
+    this.maxEntrySize = maxEntrySize || this.maxSize
     this.sizeCalculation = sizeCalculation || length
     if (this.sizeCalculation) {
-      if (!this.maxSize) {
+      if (!this.maxSize && !this.maxEntrySize) {
         throw new TypeError(
-          'cannot set sizeCalculation without setting maxSize'
+          'cannot set sizeCalculation without setting maxSize or maxEntrySize'
         )
       }
       if (typeof this.sizeCalculation !== 'function') {
@@ -12878,10 +12880,18 @@ class LRUCache {
     this.noUpdateTTL = !!noUpdateTTL
     this.noDeleteOnFetchRejection = !!noDeleteOnFetchRejection
 
-    if (this.maxSize !== 0) {
-      if (!isPosInt(this.maxSize)) {
+    // NB: maxEntrySize is set to maxSize if it's set
+    if (this.maxEntrySize !== 0) {
+      if (this.maxSize !== 0) {
+        if (!isPosInt(this.maxSize)) {
+          throw new TypeError(
+            'maxSize must be a positive integer if specified'
+          )
+        }
+      }
+      if (!isPosInt(this.maxEntrySize)) {
         throw new TypeError(
-          'maxSize must be a positive integer if specified'
+          'maxEntrySize must be a positive integer if specified'
         )
       }
       this.initializeSizeTracking()
@@ -13049,7 +13059,7 @@ class LRUCache {
   requireSize(k, v, size, sizeCalculation) {
     if (size || sizeCalculation) {
       throw new TypeError(
-        'cannot set size without setting maxSize on cache'
+        'cannot set size without setting maxSize or maxEntrySize on cache'
       )
     }
   }
@@ -13221,7 +13231,8 @@ class LRUCache {
   ) {
     size = this.requireSize(k, v, size, sizeCalculation)
     // if the item doesn't fit, don't do anything
-    if (this.maxSize && size > this.maxSize) {
+    // NB: maxEntrySize set to maxSize by default
+    if (this.maxEntrySize && size > this.maxEntrySize) {
       return this
     }
     let index = this.size === 0 ? undefined : this.keyMap.get(k)
@@ -13707,12 +13718,12 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be in strict mode.
 (() => {
 "use strict";
-/* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(593);
-/* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(lru_cache__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(640);
-/* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(arrive__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(777);
-/* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(graphemer__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(593);
+/* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(lru_cache__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(640);
+/* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(arrive__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(777);
+/* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(graphemer__WEBPACK_IMPORTED_MODULE_1__);
 
 
 
@@ -13759,7 +13770,7 @@ const HIDE_MESSAGE_ANIM_OPTS = {
   duration: 500,
   fill: 'forwards'
 };
-const SPLITTER = new (graphemer__WEBPACK_IMPORTED_MODULE_2___default())();
+const SPLITTER = new (graphemer__WEBPACK_IMPORTED_MODULE_1___default())();
 const EMOTE_ANIMATION_STYLE = `
 .chat-line__message--emote:hover,
 .chat-badge:hover {
@@ -13780,13 +13791,13 @@ const EMOTE_ANIMATION_STYLE = `
 
 class SaneTwitchChat {
   #prevMessage = null;
-  #fastChatCache = new (lru_cache__WEBPACK_IMPORTED_MODULE_0___default())({
+  #fastChatCache = new (lru_cache__WEBPACK_IMPORTED_MODULE_2___default())({
     max: FAST_CHAT_CACHE_SIZE,
     ttl: FAST_CHAT_CACHE_TIMEOUT,
     updateAgeOnGet: true,
     ttlResolution: 100
   });
-  #longChatCache = new (lru_cache__WEBPACK_IMPORTED_MODULE_0___default())({
+  #longChatCache = new (lru_cache__WEBPACK_IMPORTED_MODULE_2___default())({
     max: LONG_CHAT_CACHE_SIZE,
     ttl: LONG_CHAT_CACHE_TIMEOUT,
     updateAgeOnGet: true,
