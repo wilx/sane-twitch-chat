@@ -120,7 +120,8 @@ class SaneTwitchChat {
         if (factCachedNode !== undefined
             && !Object.is(factCachedNode, msgNode)) {
             console.log(`Hiding message present in fast chat cache: ${combinedMessage}`);
-            this.#hideNode(msgNode);
+            this.#fastChatCache.set(combinedMessage, msgNode);
+            this.#hideNode(factCachedNode);
             return;
         }
         if (factCachedNode === undefined) {
@@ -134,7 +135,8 @@ class SaneTwitchChat {
             if (longCachedNode !== undefined
                 && !Object.is(longCachedNode, msgNode)) {
                 console.log(`Hiding long message / copy-pasta present in long chat cache: ${combinedMessage}`);
-                this.#hideNode(msgNode);
+                this.#longChatCache.set(combinedMessage, msgNode);
+                this.#hideNode(longCachedNode);
                 return;
             }
             if (longCachedNode === undefined) {
@@ -147,12 +149,12 @@ class SaneTwitchChat {
         document.arrive(CHAT_SEL, (chatNode) => {
             console.log('Sane chat cleanup is enabled.');
             chatNode.arrive(CHAT_LINE_SEL, (msgNode) => {
-                // const xpathResult = document.evaluate('descendant::span[contains(@data-test-selector,"chat-line-message-body")]',
+                // const xpathResult = document.evaluate('descendant::div[contains(@data-test-selector,"chat-line-message-body")]',
                 // msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
                 const xpathResult = document.evaluate(('descendant::div[contains(@class,"chat-line__message--emote-button")]/span//img'
-                        + ' | descendant::a[contains(@class,"link-fragment")]'
-                        + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]//div[contains(@class,"bttv-emote")]/img'
-                        + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]'),
+                    + ' | descendant::a[contains(@class,"link-fragment")]'
+                    + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]//div[contains(@class,"bttv-emote")]/img'
+                    + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]'),
                 msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
                 const fragments = [];
                 for (let node; (node = xpathResult.iterateNext());) {
