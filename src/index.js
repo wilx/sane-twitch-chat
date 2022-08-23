@@ -29,7 +29,7 @@ const LONG_CHAT_THRESHOLD_LENGTH = 150;
 const CHAT_SEL = '.chat-list__list-container, .chat-scrollable-area__message-container';
 const CHAT_LINE_SEL = '.chat-line__message';
 const SPACE_NORM_RE = /([\s])[\s]+/gu;
-const BRAILLE_RE = /^[\u{2800}-\u{28FF}]+$/u;
+const BRAILLE_RE = /^[\s\u{2800}-\u{28FF}]+$/u;
 // This RegExp is used to replace text added by BTTV extension with just the emote name.
 const STRIP_BTTV_TEXT_RE = /(?:^|\s)(\S+)(?:\r\n?|\n)Channel: \S+(?:\r\n?|\n)\S+ Channel Emotes(?:\r\n?|\n)\1(?:$|\s)/gum;
 
