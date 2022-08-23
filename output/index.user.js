@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.375
+// @version     1.0.381
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -13757,7 +13757,7 @@ const LONG_CHAT_THRESHOLD_LENGTH = 150;
 const CHAT_SEL = '.chat-list__list-container, .chat-scrollable-area__message-container';
 const CHAT_LINE_SEL = '.chat-line__message';
 const SPACE_NORM_RE = /([\s])[\s]+/gu;
-const BRAILLE_RE = /^[\u{2800}-\u{28FF}]+$/u; // This RegExp is used to replace text added by BTTV extension with just the emote name.
+const BRAILLE_RE = /^[\s\u{2800}-\u{28FF}]+$/u; // This RegExp is used to replace text added by BTTV extension with just the emote name.
 
 const STRIP_BTTV_TEXT_RE = /(?:^|\s)(\S+)(?:\r\n?|\n)Channel: \S+(?:\r\n?|\n)\S+ Channel Emotes(?:\r\n?|\n)\1(?:$|\s)/gum;
 const HIDE_MESSAGE_KEYFRAMES = [{
@@ -13840,26 +13840,31 @@ class SaneTwitchChat {
 
     const factCachedNode = this.#fastChatCache.get(combinedMessage);
 
-    if (factCachedNode !== undefined) {
+    if (factCachedNode !== undefined && !Object.is(factCachedNode, msgNode)) {
       console.log(`Hiding message present in fast chat cache: ${combinedMessage}`);
       this.#hideNode(msgNode);
       return;
     }
 
-    this.#fastChatCache.set(combinedMessage, msgNode); // Filter long chat messages which repeat within longer period of time.
+    if (factCachedNode === undefined) {
+      this.#fastChatCache.set(combinedMessage, msgNode);
+    } // Filter long chat messages which repeat within longer period of time.
+
 
     const combinedMessageLength = SPLITTER.countGraphemes(combinedMessage);
 
     if (combinedMessageLength >= LONG_CHAT_THRESHOLD_LENGTH) {
       const longCachedNode = this.#longChatCache.get(combinedMessage);
 
-      if (longCachedNode !== undefined) {
+      if (longCachedNode !== undefined && !Object.is(longCachedNode, msgNode)) {
         console.log(`Hiding long message / copy-pasta present in long chat cache: ${combinedMessage}`);
         this.#hideNode(msgNode);
         return;
       }
 
-      this.#longChatCache.set(combinedMessage, msgNode);
+      if (longCachedNode === undefined) {
+        this.#longChatCache.set(combinedMessage, msgNode);
+      }
     }
   }
 
@@ -13867,6 +13872,8 @@ class SaneTwitchChat {
     document.arrive(CHAT_SEL, chatNode => {
       console.log('Sane chat cleanup is enabled.');
       chatNode.arrive(CHAT_LINE_SEL, msgNode => {
+        // const xpathResult = document.evaluate('descendant::span[contains(@data-test-selector,"chat-line-message-body")]',
+        // msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
         const xpathResult = document.evaluate('descendant::div[contains(@class,"chat-line__message--emote-button")]/span//img' + ' | descendant::a[contains(@class,"link-fragment")]' + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]//div[contains(@class,"bttv-emote")]/img' + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]', msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
         const fragments = [];
 
