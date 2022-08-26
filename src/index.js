@@ -160,7 +160,7 @@ class SaneTwitchChat {
                 // const xpathResult = document.evaluate('descendant::div[contains(@data-test-selector,"chat-line-message-body")]',
                 // msgNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
                 const xpathResult = document.evaluate(
-                    ('descendant::div[contains(@class,"chat-line__message--emote-button")]/span//img'
+                    ('descendant::div[contains(@class,"chat-line__message--emote-button")]//span//img'
                     + ' | descendant::a[contains(@class,"link-fragment")]'
                     + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]//div[contains(@class,"bttv-emote")]/img'
                     + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]'),
