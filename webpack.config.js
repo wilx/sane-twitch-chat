@@ -64,7 +64,7 @@ module.exports = {
                 downloadURL: 'https://github.com/wilx/sane-twitch-chat/raw/master/output/index.user.js',
                 match: 'https://www.twitch.tv/*',
                 'run-at': 'document-end',
-                grant: ['GM_cookie', 'GM.cookie']
+                grant: ['GM.cookie', 'GM.info']
             },
             pretty: true
         })

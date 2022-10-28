@@ -216,4 +216,11 @@ async function start () {
     saneTwitchChat.init();
 }
 
-start();
+if (GM?.info !== undefined) {
+    start();
+}
+
+export {
+    start,
+    SaneTwitchChat
+};
