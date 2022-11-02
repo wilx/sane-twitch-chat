@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.419
+// @version     1.0.422
 // @author      wilx
 // @description Twitch chat sanitizer.
 // @homepage    https://github.com/wilx/sane-twitch-chat
@@ -13116,6 +13116,11 @@ class LRUCache {
       this.sizes[index] = 0
     }
     this.requireSize = (k, v, size, sizeCalculation) => {
+      // provisionally accept background fetches.
+      // actual value size will be checked when they return.
+      if (this.isBackgroundFetch(v)) {
+        return 0
+      }
       if (!isPosInt(size)) {
         if (sizeCalculation) {
           if (typeof sizeCalculation !== 'function') {
@@ -13137,9 +13142,11 @@ class LRUCache {
     }
     this.addItemSize = (index, size) => {
       this.sizes[index] = size
-      const maxSize = this.maxSize - this.sizes[index]
-      while (this.calculatedSize > maxSize) {
-        this.evict(true)
+      if (this.maxSize) {
+        const maxSize = this.maxSize - this.sizes[index]
+        while (this.calculatedSize > maxSize) {
+          this.evict(true)
+        }
       }
       this.calculatedSize += this.sizes[index]
     }
@@ -13323,6 +13330,9 @@ class LRUCache {
     // if the item doesn't fit, don't do anything
     // NB: maxEntrySize set to maxSize by default
     if (this.maxEntrySize && size > this.maxEntrySize) {
+      // have to delete, in case a background fetch is there already.
+      // in non-async cases, this is a no-op
+      this.delete(k)
       return this
     }
     let index = this.size === 0 ? undefined : this.keyMap.get(k)
