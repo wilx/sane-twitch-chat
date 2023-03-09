@@ -1,16 +1,16 @@
 // ==UserScript==
 // @name        sane-twitch-chat
-// @version     1.0.425
-// @author      wilx
 // @description Twitch chat sanitizer.
+// @version     1.0.434
+// @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
 // @match       https://www.twitch.tv/*
-// @namespace   https://github.com/wilx/sane-twitch-chat
 // @downloadURL https://github.com/wilx/sane-twitch-chat/raw/master/output/index.user.js
-// @run-at      document-end
 // @grant       GM.cookie
 // @grant       GM.info
+// @namespace   https://github.com/wilx/sane-twitch-chat
+// @run-at      document-end
 // ==/UserScript==
 
 /******/ (() => { // webpackBootstrap
@@ -12730,11 +12730,73 @@ const Graphemer_1 = __importDefault(__webpack_require__(553));
 exports["default"] = Graphemer_1.default;
 
 
-/***/ }),
+/***/ })
 
-/***/ 593:
-/***/ ((module) => {
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__webpack_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__webpack_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__webpack_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/************************************************************************/
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+(() => {
+"use strict";
 
+// UNUSED EXPORTS: SaneTwitchChat, start
+
+;// CONCATENATED MODULE: ./node_modules/lru-cache/index.mjs
 const perf =
   typeof performance === 'object' &&
   performance &&
@@ -12754,8 +12816,13 @@ const AC = hasAbortController
       constructor() {
         this.signal = new AS()
       }
-      abort() {
-        this.signal.dispatchEvent('abort')
+      abort(reason = new Error('This operation was aborted')) {
+        this.signal.reason = this.signal.reason || reason
+        this.signal.aborted = true
+        this.signal.dispatchEvent({
+          type: 'abort',
+          target: this.signal,
+        })
       }
     }
 
@@ -12768,13 +12835,13 @@ const AS = hasAbortSignal
   ? AC.AbortController
   : class AbortSignal {
       constructor() {
+        this.reason = undefined
         this.aborted = false
         this._listeners = []
       }
-      dispatchEvent(type) {
-        if (type === 'abort') {
+      dispatchEvent(e) {
+        if (e.type === 'abort') {
           this.aborted = true
-          const e = { type, target: this }
           this.onabort(e)
           this._listeners.forEach(f => f(e), this)
         }
@@ -12900,6 +12967,9 @@ class LRUCache {
       fetchContext,
       noDeleteOnFetchRejection,
       noDeleteOnStaleGet,
+      allowStaleOnFetchRejection,
+      allowStaleOnFetchAbort,
+      ignoreFetchAbort,
     } = options
 
     // deprecated options, don't trigger a warning for getting them if
@@ -12969,6 +13039,9 @@ class LRUCache {
     this.noDisposeOnSet = !!noDisposeOnSet
     this.noUpdateTTL = !!noUpdateTTL
     this.noDeleteOnFetchRejection = !!noDeleteOnFetchRejection
+    this.allowStaleOnFetchRejection = !!allowStaleOnFetchRejection
+    this.allowStaleOnFetchAbort = !!allowStaleOnFetchAbort
+    this.ignoreFetchAbort = !!ignoreFetchAbort
 
     // NB: maxEntrySize is set to maxSize if it's set
     if (this.maxEntrySize !== 0) {
@@ -13062,6 +13135,15 @@ class LRUCache {
       this.starts[index] = this.ttls[index] !== 0 ? perf.now() : 0
     }
 
+    this.statusTTL = (status, index) => {
+      if (status) {
+        status.ttl = this.ttls[index]
+        status.start = this.starts[index]
+        status.now = cachedNow || getNow()
+        status.remainingTTL = status.now + status.ttl - status.start
+      }
+    }
+
     // debounce calls to perf.now() to 1s so we're not hitting
     // that costly call repeatedly.
     let cachedNow = 0
@@ -13102,9 +13184,10 @@ class LRUCache {
       )
     }
   }
-  updateItemAge(index) {}
-  setItemTTL(index, ttl, start) {}
-  isStale(index) {
+  updateItemAge(_index) {}
+  statusTTL(_status, _index) {}
+  setItemTTL(_index, _ttl, _start) {}
+  isStale(_index) {
     return false
   }
 
@@ -13134,13 +13217,15 @@ class LRUCache {
           }
         } else {
           throw new TypeError(
-            'invalid size value (must be positive integer)'
+            'invalid size value (must be positive integer). ' +
+              'When maxSize or maxEntrySize is used, sizeCalculation or size ' +
+              'must be set.'
           )
         }
       }
       return size
     }
-    this.addItemSize = (index, size) => {
+    this.addItemSize = (index, size, status) => {
       this.sizes[index] = size
       if (this.maxSize) {
         const maxSize = this.maxSize - this.sizes[index]
@@ -13149,11 +13234,15 @@ class LRUCache {
         }
       }
       this.calculatedSize += this.sizes[index]
+      if (status) {
+        status.entrySize = size
+        status.totalCalculatedSize = this.calculatedSize
+      }
     }
   }
-  removeItemSize(index) {}
-  addItemSize(index, size) {}
-  requireSize(k, v, size, sizeCalculation) {
+  removeItemSize(_index) {}
+  addItemSize(_index, _size) {}
+  requireSize(_k, _v, size, sizeCalculation) {
     if (size || sizeCalculation) {
       throw new TypeError(
         'cannot set size without setting maxSize or maxEntrySize on cache'
@@ -13198,39 +13287,74 @@ class LRUCache {
   }
 
   isValidIndex(index) {
-    return this.keyMap.get(this.keyList[index]) === index
+    return (
+      index !== undefined &&
+      this.keyMap.get(this.keyList[index]) === index
+    )
   }
 
   *entries() {
     for (const i of this.indexes()) {
-      yield [this.keyList[i], this.valList[i]]
+      if (
+        this.valList[i] !== undefined &&
+        this.keyList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield [this.keyList[i], this.valList[i]]
+      }
     }
   }
   *rentries() {
     for (const i of this.rindexes()) {
-      yield [this.keyList[i], this.valList[i]]
+      if (
+        this.valList[i] !== undefined &&
+        this.keyList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield [this.keyList[i], this.valList[i]]
+      }
     }
   }
 
   *keys() {
     for (const i of this.indexes()) {
-      yield this.keyList[i]
+      if (
+        this.keyList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield this.keyList[i]
+      }
     }
   }
   *rkeys() {
     for (const i of this.rindexes()) {
-      yield this.keyList[i]
+      if (
+        this.keyList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield this.keyList[i]
+      }
     }
   }
 
   *values() {
     for (const i of this.indexes()) {
-      yield this.valList[i]
+      if (
+        this.valList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield this.valList[i]
+      }
     }
   }
   *rvalues() {
     for (const i of this.rindexes()) {
-      yield this.valList[i]
+      if (
+        this.valList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield this.valList[i]
+      }
     }
   }
 
@@ -13238,9 +13362,14 @@ class LRUCache {
     return this.entries()
   }
 
-  find(fn, getOptions = {}) {
+  find(fn, getOptions) {
     for (const i of this.indexes()) {
-      if (fn(this.valList[i], this.keyList[i], this)) {
+      const v = this.valList[i]
+      const value = this.isBackgroundFetch(v)
+        ? v.__staleWhileFetching
+        : v
+      if (value === undefined) continue
+      if (fn(value, this.keyList[i], this)) {
         return this.get(this.keyList[i], getOptions)
       }
     }
@@ -13248,13 +13377,23 @@ class LRUCache {
 
   forEach(fn, thisp = this) {
     for (const i of this.indexes()) {
-      fn.call(thisp, this.valList[i], this.keyList[i], this)
+      const v = this.valList[i]
+      const value = this.isBackgroundFetch(v)
+        ? v.__staleWhileFetching
+        : v
+      if (value === undefined) continue
+      fn.call(thisp, value, this.keyList[i], this)
     }
   }
 
   rforEach(fn, thisp = this) {
     for (const i of this.rindexes()) {
-      fn.call(thisp, this.valList[i], this.keyList[i], this)
+      const v = this.valList[i]
+      const value = this.isBackgroundFetch(v)
+        ? v.__staleWhileFetching
+        : v
+      if (value === undefined) continue
+      fn.call(thisp, value, this.keyList[i], this)
     }
   }
 
@@ -13282,6 +13421,7 @@ class LRUCache {
       const value = this.isBackgroundFetch(v)
         ? v.__staleWhileFetching
         : v
+      if (value === undefined) continue
       const entry = { value }
       if (this.ttls) {
         entry.ttl = this.ttls[i]
@@ -13312,7 +13452,7 @@ class LRUCache {
     }
   }
 
-  dispose(v, k, reason) {}
+  dispose(_v, _k, _reason) {}
 
   set(
     k,
@@ -13324,12 +13464,17 @@ class LRUCache {
       size = 0,
       sizeCalculation = this.sizeCalculation,
       noUpdateTTL = this.noUpdateTTL,
+      status,
     } = {}
   ) {
     size = this.requireSize(k, v, size, sizeCalculation)
     // if the item doesn't fit, don't do anything
     // NB: maxEntrySize set to maxSize by default
     if (this.maxEntrySize && size > this.maxEntrySize) {
+      if (status) {
+        status.set = 'miss'
+        status.maxEntrySizeExceeded = true
+      }
       // have to delete, in case a background fetch is there already.
       // in non-async cases, this is a no-op
       this.delete(k)
@@ -13346,14 +13491,18 @@ class LRUCache {
       this.prev[index] = this.tail
       this.tail = index
       this.size++
-      this.addItemSize(index, size)
+      this.addItemSize(index, size, status)
+      if (status) {
+        status.set = 'add'
+      }
       noUpdateTTL = false
     } else {
       // update
+      this.moveToTail(index)
       const oldVal = this.valList[index]
       if (v !== oldVal) {
         if (this.isBackgroundFetch(oldVal)) {
-          oldVal.__abortController.abort()
+          oldVal.__abortController.abort(new Error('replaced'))
         } else {
           if (!noDisposeOnSet) {
             this.dispose(oldVal, k, 'set')
@@ -13364,9 +13513,18 @@ class LRUCache {
         }
         this.removeItemSize(index)
         this.valList[index] = v
-        this.addItemSize(index, size)
+        this.addItemSize(index, size, status)
+        if (status) {
+          status.set = 'replace'
+          const oldValue =
+            oldVal && this.isBackgroundFetch(oldVal)
+              ? oldVal.__staleWhileFetching
+              : oldVal
+          if (oldValue !== undefined) status.oldValue = oldValue
+        }
+      } else if (status) {
+        status.set = 'update'
       }
-      this.moveToTail(index)
     }
     if (ttl !== 0 && this.ttl === 0 && !this.ttls) {
       this.initializeTTLTracking()
@@ -13374,6 +13532,7 @@ class LRUCache {
     if (!noUpdateTTL) {
       this.setItemTTL(index, ttl, start)
     }
+    this.statusTTL(status, index)
     if (this.disposeAfter) {
       while (this.disposed.length) {
         this.disposeAfter(...this.disposed.shift())
@@ -13409,7 +13568,7 @@ class LRUCache {
     const k = this.keyList[head]
     const v = this.valList[head]
     if (this.isBackgroundFetch(v)) {
-      v.__abortController.abort()
+      v.__abortController.abort(new Error('evicted'))
     } else {
       this.dispose(v, k, 'evict')
       if (this.disposeAfter) {
@@ -13429,15 +13588,22 @@ class LRUCache {
     return head
   }
 
-  has(k, { updateAgeOnHas = this.updateAgeOnHas } = {}) {
+  has(k, { updateAgeOnHas = this.updateAgeOnHas, status } = {}) {
     const index = this.keyMap.get(k)
     if (index !== undefined) {
       if (!this.isStale(index)) {
         if (updateAgeOnHas) {
           this.updateItemAge(index)
         }
+        if (status) status.has = 'hit'
+        this.statusTTL(status, index)
         return true
+      } else if (status) {
+        status.has = 'stale'
+        this.statusTTL(status, index)
       }
+    } else if (status) {
+      status.has = 'miss'
     }
     return false
   }
@@ -13458,41 +13624,109 @@ class LRUCache {
       return v
     }
     const ac = new AC()
+    if (options.signal) {
+      options.signal.addEventListener('abort', () =>
+        ac.abort(options.signal.reason)
+      )
+    }
     const fetchOpts = {
       signal: ac.signal,
       options,
       context,
     }
-    const cb = v => {
-      if (!ac.signal.aborted) {
-        this.set(k, v, fetchOpts.options)
+    const cb = (v, updateCache = false) => {
+      const { aborted } = ac.signal
+      const ignoreAbort = options.ignoreFetchAbort && v !== undefined
+      if (options.status) {
+        if (aborted && !updateCache) {
+          options.status.fetchAborted = true
+          options.status.fetchError = ac.signal.reason
+          if (ignoreAbort) options.status.fetchAbortIgnored = true
+        } else {
+          options.status.fetchResolved = true
+        }
+      }
+      if (aborted && !ignoreAbort && !updateCache) {
+        return fetchFail(ac.signal.reason)
+      }
+      // either we didn't abort, and are still here, or we did, and ignored
+      if (this.valList[index] === p) {
+        if (v === undefined) {
+          if (p.__staleWhileFetching) {
+            this.valList[index] = p.__staleWhileFetching
+          } else {
+            this.delete(k)
+          }
+        } else {
+          if (options.status) options.status.fetchUpdated = true
+          this.set(k, v, fetchOpts.options)
+        }
       }
       return v
     }
     const eb = er => {
+      if (options.status) {
+        options.status.fetchRejected = true
+        options.status.fetchError = er
+      }
+      return fetchFail(er)
+    }
+    const fetchFail = er => {
+      const { aborted } = ac.signal
+      const allowStaleAborted =
+        aborted && options.allowStaleOnFetchAbort
+      const allowStale =
+        allowStaleAborted || options.allowStaleOnFetchRejection
+      const noDelete = allowStale || options.noDeleteOnFetchRejection
       if (this.valList[index] === p) {
-        const del =
-          !options.noDeleteOnFetchRejection ||
-          p.__staleWhileFetching === undefined
+        // if we allow stale on fetch rejections, then we need to ensure that
+        // the stale value is not removed from the cache when the fetch fails.
+        const del = !noDelete || p.__staleWhileFetching === undefined
         if (del) {
           this.delete(k)
-        } else {
+        } else if (!allowStaleAborted) {
           // still replace the *promise* with the stale value,
           // since we are done with the promise at this point.
+          // leave it untouched if we're still waiting for an
+          // aborted background fetch that hasn't yet returned.
           this.valList[index] = p.__staleWhileFetching
         }
       }
-      if (p.__returned === p) {
+      if (allowStale) {
+        if (options.status && p.__staleWhileFetching !== undefined) {
+          options.status.returnedStale = true
+        }
+        return p.__staleWhileFetching
+      } else if (p.__returned === p) {
         throw er
       }
     }
-    const pcall = res => res(this.fetchMethod(k, v, fetchOpts))
+    const pcall = (res, rej) => {
+      this.fetchMethod(k, v, fetchOpts).then(v => res(v), rej)
+      // ignored, we go until we finish, regardless.
+      // defer check until we are actually aborting,
+      // so fetchMethod can override.
+      ac.signal.addEventListener('abort', () => {
+        if (
+          !options.ignoreFetchAbort ||
+          options.allowStaleOnFetchAbort
+        ) {
+          res()
+          // when it eventually resolves, update the cache.
+          if (options.allowStaleOnFetchAbort) {
+            res = v => cb(v, true)
+          }
+        }
+      })
+    }
+    if (options.status) options.status.fetchDispatched = true
     const p = new Promise(pcall).then(cb, eb)
     p.__abortController = ac
     p.__staleWhileFetching = v
     p.__returned = null
     if (index === undefined) {
-      this.set(k, p, fetchOpts.options)
+      // internal, don't expose status.
+      this.set(k, p, { ...fetchOpts.options, status: undefined })
       index = this.keyMap.get(k)
     } else {
       this.valList[index] = p
@@ -13530,15 +13764,22 @@ class LRUCache {
       noUpdateTTL = this.noUpdateTTL,
       // fetch exclusive options
       noDeleteOnFetchRejection = this.noDeleteOnFetchRejection,
+      allowStaleOnFetchRejection = this.allowStaleOnFetchRejection,
+      ignoreFetchAbort = this.ignoreFetchAbort,
+      allowStaleOnFetchAbort = this.allowStaleOnFetchAbort,
       fetchContext = this.fetchContext,
       forceRefresh = false,
+      status,
+      signal,
     } = {}
   ) {
     if (!this.fetchMethod) {
+      if (status) status.fetch = 'get'
       return this.get(k, {
         allowStale,
         updateAgeOnGet,
         noDeleteOnStaleGet,
+        status,
       })
     }
 
@@ -13552,37 +13793,54 @@ class LRUCache {
       sizeCalculation,
       noUpdateTTL,
       noDeleteOnFetchRejection,
+      allowStaleOnFetchRejection,
+      allowStaleOnFetchAbort,
+      ignoreFetchAbort,
+      status,
+      signal,
     }
 
     let index = this.keyMap.get(k)
     if (index === undefined) {
+      if (status) status.fetch = 'miss'
       const p = this.backgroundFetch(k, index, options, fetchContext)
       return (p.__returned = p)
     } else {
       // in cache, maybe already fetching
       const v = this.valList[index]
       if (this.isBackgroundFetch(v)) {
-        return allowStale && v.__staleWhileFetching !== undefined
-          ? v.__staleWhileFetching
-          : (v.__returned = v)
+        const stale =
+          allowStale && v.__staleWhileFetching !== undefined
+        if (status) {
+          status.fetch = 'inflight'
+          if (stale) status.returnedStale = true
+        }
+        return stale ? v.__staleWhileFetching : (v.__returned = v)
       }
 
       // if we force a refresh, that means do NOT serve the cached value,
       // unless we are already in the process of refreshing the cache.
-      if (!forceRefresh && !this.isStale(index)) {
+      const isStale = this.isStale(index)
+      if (!forceRefresh && !isStale) {
+        if (status) status.fetch = 'hit'
         this.moveToTail(index)
         if (updateAgeOnGet) {
           this.updateItemAge(index)
         }
+        this.statusTTL(status, index)
         return v
       }
 
       // ok, it is stale or a forced refresh, and not already fetching.
       // refresh the cache.
       const p = this.backgroundFetch(k, index, options, fetchContext)
-      return allowStale && p.__staleWhileFetching !== undefined
-        ? p.__staleWhileFetching
-        : (p.__returned = p)
+      const hasStale = p.__staleWhileFetching !== undefined
+      const staleVal = hasStale && allowStale
+      if (status) {
+        status.fetch = hasStale && isStale ? 'stale' : 'refresh'
+        if (staleVal && isStale) status.returnedStale = true
+      }
+      return staleVal ? p.__staleWhileFetching : (p.__returned = p)
     }
   }
 
@@ -13592,28 +13850,39 @@ class LRUCache {
       allowStale = this.allowStale,
       updateAgeOnGet = this.updateAgeOnGet,
       noDeleteOnStaleGet = this.noDeleteOnStaleGet,
+      status,
     } = {}
   ) {
     const index = this.keyMap.get(k)
     if (index !== undefined) {
       const value = this.valList[index]
       const fetching = this.isBackgroundFetch(value)
+      this.statusTTL(status, index)
       if (this.isStale(index)) {
+        if (status) status.get = 'stale'
         // delete only if not an in-flight background fetch
         if (!fetching) {
           if (!noDeleteOnStaleGet) {
             this.delete(k)
           }
+          if (status) status.returnedStale = allowStale
           return allowStale ? value : undefined
         } else {
+          if (status) {
+            status.returnedStale =
+              allowStale && value.__staleWhileFetching !== undefined
+          }
           return allowStale ? value.__staleWhileFetching : undefined
         }
       } else {
+        if (status) status.get = 'hit'
         // if we're currently fetching it, we don't actually have it yet
-        // it's not stale, which means this isn't a staleWhileRefetching,
-        // so we just return undefined
+        // it's not stale, which means this isn't a staleWhileRefetching.
+        // If it's not stale, and fetching, AND has a __staleWhileFetching
+        // value, then that means the user fetched with {forceRefresh:true},
+        // so it's safe to return that value.
         if (fetching) {
-          return undefined
+          return value.__staleWhileFetching
         }
         this.moveToTail(index)
         if (updateAgeOnGet) {
@@ -13621,6 +13890,8 @@ class LRUCache {
         }
         return value
       }
+    } else if (status) {
+      status.get = 'miss'
     }
   }
 
@@ -13666,7 +13937,7 @@ class LRUCache {
           this.removeItemSize(index)
           const v = this.valList[index]
           if (this.isBackgroundFetch(v)) {
-            v.__abortController.abort()
+            v.__abortController.abort(new Error('deleted'))
           } else {
             this.dispose(v, k, 'delete')
             if (this.disposeAfter) {
@@ -13701,7 +13972,7 @@ class LRUCache {
     for (const index of this.rindexes({ allowStale: true })) {
       const v = this.valList[index]
       if (this.isBackgroundFetch(v)) {
-        v.__abortController.abort()
+        v.__abortController.abort(new Error('deleted'))
       } else {
         const k = this.keyList[index]
         this.dispose(v, k, 'delete')
@@ -13752,79 +14023,14 @@ class LRUCache {
   }
 }
 
-module.exports = LRUCache
+/* harmony default export */ const lru_cache = (LRUCache);
 
-
-/***/ })
-
-/******/ 	});
-/************************************************************************/
-/******/ 	// The module cache
-/******/ 	var __webpack_module_cache__ = {};
-/******/ 	
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/ 		// Check if module is in cache
-/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
-/******/ 		if (cachedModule !== undefined) {
-/******/ 			return cachedModule.exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = __webpack_module_cache__[moduleId] = {
-/******/ 			// no module.id needed
-/******/ 			// no module.loaded needed
-/******/ 			exports: {}
-/******/ 		};
-/******/ 	
-/******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/ 	
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/ 	
-/************************************************************************/
-/******/ 	/* webpack/runtime/compat get default export */
-/******/ 	(() => {
-/******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__webpack_require__.n = (module) => {
-/******/ 			var getter = module && module.__esModule ?
-/******/ 				() => (module['default']) :
-/******/ 				() => (module);
-/******/ 			__webpack_require__.d(getter, { a: getter });
-/******/ 			return getter;
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/define property getters */
-/******/ 	(() => {
-/******/ 		// define getter functions for harmony exports
-/******/ 		__webpack_require__.d = (exports, definition) => {
-/******/ 			for(var key in definition) {
-/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 				}
-/******/ 			}
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	(() => {
-/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ 	})();
-/******/ 	
-/************************************************************************/
-var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be in strict mode.
-(() => {
-"use strict";
-/* unused harmony exports start, SaneTwitchChat */
-/* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(593);
-/* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(lru_cache__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(640);
-/* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(arrive__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(777);
-/* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(graphemer__WEBPACK_IMPORTED_MODULE_1__);
+// EXTERNAL MODULE: ./node_modules/arrive/src/arrive.js
+var arrive = __webpack_require__(640);
+// EXTERNAL MODULE: ./node_modules/graphemer/lib/index.js
+var lib = __webpack_require__(777);
+var lib_default = /*#__PURE__*/__webpack_require__.n(lib);
+;// CONCATENATED MODULE: ./src/index.js
 
 
 
@@ -13868,7 +14074,7 @@ const HIDE_MESSAGE_ANIM_OPTS = {
   duration: 500,
   fill: 'forwards'
 };
-const SPLITTER = new (graphemer__WEBPACK_IMPORTED_MODULE_1___default())();
+const SPLITTER = new (lib_default())();
 const EMOTE_ANIMATION_STYLE = `
 .chat-line__message--emote:hover,
 .chat-badge:hover {
@@ -13889,13 +14095,13 @@ const EMOTE_ANIMATION_STYLE = `
 class SaneTwitchChat {
   #userName = null;
   #prevMessage = null;
-  #fastChatCache = new (lru_cache__WEBPACK_IMPORTED_MODULE_2___default())({
+  #fastChatCache = new lru_cache({
     max: FAST_CHAT_CACHE_SIZE,
     ttl: FAST_CHAT_CACHE_TIMEOUT,
     updateAgeOnGet: true,
     ttlResolution: 100
   });
-  #longChatCache = new (lru_cache__WEBPACK_IMPORTED_MODULE_2___default())({
+  #longChatCache = new lru_cache({
     max: LONG_CHAT_CACHE_SIZE,
     ttl: LONG_CHAT_CACHE_TIMEOUT,
     updateAgeOnGet: true,
