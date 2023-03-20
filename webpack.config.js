@@ -59,7 +59,7 @@ module.exports = {
                 return {
                     ...original,
                     name: '[name]',
-                    //version: '[version]',
+                    // version: '[version]',
                     author: 'wilx',
                     homepage: 'https://github.com/wilx/sane-twitch-chat',
                     namespace: 'https://github.com/wilx/sane-twitch-chat',
