@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.442
+// @version     1.0.443
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -11,6 +11,7 @@
 // @grant       GM.info
 // @namespace   https://github.com/wilx/sane-twitch-chat
 // @run-at      document-end
+// @updateURL   https://github.com/wilx/sane-twitch-chat/raw/master/output/index.user.js
 // ==/UserScript==
 
 /******/ (() => { // webpackBootstrap
