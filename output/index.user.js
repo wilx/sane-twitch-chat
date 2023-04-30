@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.438
+// @version     1.0.442
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -12806,13 +12806,63 @@ const perf = typeof performance === 'object' &&
     ? performance
     : Date;
 const warned = new Set();
+/* c8 ignore start */
+const PROCESS = (typeof process === 'object' && !!process ? process : {});
+/* c8 ignore start */
 const emitWarning = (msg, type, code, fn) => {
-    typeof process === 'object' &&
-        process &&
-        typeof process.emitWarning === 'function'
-        ? process.emitWarning(msg, type, code, fn)
+    typeof PROCESS.emitWarning === 'function'
+        ? PROCESS.emitWarning(msg, type, code, fn)
         : console.error(`[${code}] ${type}: ${msg}`);
 };
+let AC = globalThis.AbortController;
+let AS = globalThis.AbortSignal;
+/* c8 ignore start */
+if (typeof AC === 'undefined') {
+    //@ts-ignore
+    AS = class AbortSignal {
+        onabort;
+        _onabort = [];
+        reason;
+        aborted = false;
+        addEventListener(_, fn) {
+            this._onabort.push(fn);
+        }
+    };
+    //@ts-ignore
+    AC = class AbortController {
+        constructor() {
+            warnACPolyfill();
+        }
+        signal = new AS();
+        abort(reason) {
+            if (this.signal.aborted)
+                return;
+            //@ts-ignore
+            this.signal.reason = reason;
+            //@ts-ignore
+            this.signal.aborted = true;
+            //@ts-ignore
+            for (const fn of this.signal._onabort) {
+                fn(reason);
+            }
+            this.signal.onabort?.(reason);
+        }
+    };
+    let printACPolyfillWarning = PROCESS.env?.LRU_CACHE_IGNORE_AC_WARNING !== '1';
+    const warnACPolyfill = () => {
+        if (!printACPolyfillWarning)
+            return;
+        printACPolyfillWarning = false;
+        emitWarning('AbortController is not defined. If using lru-cache in ' +
+            'node 14, load an AbortController polyfill from the ' +
+            '`node-abort-controller` package. A minimal polyfill is ' +
+            'provided for use by LRUCache.fetch(), but it should not be ' +
+            'relied upon in other contexts (eg, passing it to other APIs that ' +
+            'use AbortController/AbortSignal might have undesirable effects). ' +
+            'You may disable this with LRU_CACHE_IGNORE_AC_WARNING=1 in the env.', 'NO_ABORT_CONTROLLER', 'ENOTSUP', warnACPolyfill);
+    };
+}
+/* c8 ignore stop */
 const shouldWarn = (code) => !warned.has(code);
 const TYPE = Symbol('type');
 const isPosInt = (n) => n && n === Math.floor(n) && n > 0 && isFinite(n);
@@ -13184,7 +13234,8 @@ class LRUCache {
                 status.ttl = ttl;
                 status.start = start;
                 status.now = cachedNow || getNow();
-                status.remainingTTL = status.now + ttl - start;
+                const age = status.now - start;
+                status.remainingTTL = ttl - age;
             }
         };
         // debounce calls to perf.now() to 1s so we're not hitting
@@ -13209,9 +13260,13 @@ class LRUCache {
             if (index === undefined) {
                 return 0;
             }
-            return ttls[index] === 0 || starts[index] === 0
-                ? Infinity
-                : starts[index] + ttls[index] - (cachedNow || getNow());
+            const ttl = ttls[index];
+            const start = starts[index];
+            if (ttl === 0 || start === 0) {
+                return Infinity;
+            }
+            const age = (cachedNow || getNow()) - start;
+            return ttl - age;
         };
         this.#isStale = index => {
             return (ttls[index] !== 0 &&
@@ -13526,8 +13581,15 @@ class LRUCache {
     }
     /**
      * Add a value to the cache.
+     *
+     * Note: if `undefined` is specified as a value, this is an alias for
+     * {@link LRUCache#delete}
      */
     set(k, v, setOptions = {}) {
+        if (v === undefined) {
+            this.delete(k);
+            return this;
+        }
         const { ttl = this.ttl, start, noDisposeOnSet = this.noDisposeOnSet, sizeCalculation = this.sizeCalculation, status, } = setOptions;
         let { noUpdateTTL = this.noUpdateTTL } = setOptions;
         const size = this.#requireSize(k, v, setOptions.size || 0, sizeCalculation);
@@ -13736,7 +13798,7 @@ class LRUCache {
         if (this.#isBackgroundFetch(v)) {
             return v;
         }
-        const ac = new AbortController();
+        const ac = new AC();
         const { signal } = options;
         // when/if our AC signals, then stop listening to theirs.
         signal?.addEventListener('abort', () => ac.abort(signal.reason), {
@@ -13865,7 +13927,7 @@ class LRUCache {
         return (!!b &&
             b instanceof Promise &&
             b.hasOwnProperty('__staleWhileFetching') &&
-            b.__abortController instanceof AbortController);
+            b.__abortController instanceof AC);
     }
     async fetch(k, fetchOptions = {}) {
         const { 
@@ -14125,7 +14187,6 @@ class LRUCache {
         }
     }
 }
-/* harmony default export */ const mjs = (LRUCache);
 //# sourceMappingURL=index.js.map
 // EXTERNAL MODULE: ./node_modules/arrive/src/arrive.js
 var arrive = __webpack_require__(640);
@@ -14197,13 +14258,13 @@ const EMOTE_ANIMATION_STYLE = `
 class SaneTwitchChat {
   #userName = null;
   #prevMessage = null;
-  #fastChatCache = new mjs({
+  #fastChatCache = new LRUCache({
     max: FAST_CHAT_CACHE_SIZE,
     ttl: FAST_CHAT_CACHE_TIMEOUT,
     updateAgeOnGet: true,
     ttlResolution: 100
   });
-  #longChatCache = new mjs({
+  #longChatCache = new LRUCache({
     max: LONG_CHAT_CACHE_SIZE,
     ttl: LONG_CHAT_CACHE_TIMEOUT,
     updateAgeOnGet: true,
