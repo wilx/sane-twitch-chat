@@ -199,7 +199,7 @@ class SaneTwitchChat {
     }
 
     constructor (userName) {
-        console.log(`Starting Sane chat cleanup for user ${userName}`);
+        console.log(`Starting Sane Twitch Chat cleanup for user ${userName}`);
         this.#userName = userName || '';
     }
 
@@ -210,14 +210,27 @@ class SaneTwitchChat {
 };
 
 async function start () {
-    const cookies = await GM.cookie.list({ name: 'name' });
+    let cookies;
+    try {
+        cookies = await GM.cookie.list({ name: 'name' });
+        console.log('I have the cookie jar');
+    } catch (e) {
+        if (e === 'not supported') {
+            // Some implementation might not support GM.cookie interface.
+            console.warn('GM.cookie not supported');
+        } else {
+            console.error(e);
+        }
+    }
     const userName = cookies?.[0]?.value;
     const saneTwitchChat = new SaneTwitchChat(userName);
     saneTwitchChat.init();
 }
 
 if (GM?.info !== undefined) {
-    start();
+    await start()
+        .catch(e => console.error(`Error in start(): ${e}`))
+        .then(() => console.log('Sane Twitch Chat started'));
 }
 
 export {
