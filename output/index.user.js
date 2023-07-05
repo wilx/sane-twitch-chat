@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.465
+// @version     1.0.466
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -692,19 +692,21 @@ async function start() {
     if (e === 'not supported') {
       // Some implementation might not support GM.cookie interface.
       console.warn('GM.cookie not supported, falling back to document.cookie');
-      try {
-        const name = js_cookie__WEBPACK_IMPORTED_MODULE_3__/* ["default"] */ .Z.get('login');
-        if (name !== undefined) {
-          cookies = [{
-            value: name
-          }];
-        }
-      } catch (e) {
-        console.error(e);
-      }
     } else {
       console.error(e);
     }
+  }
+  try {
+    if (cookies === undefined) {
+      const name = js_cookie__WEBPACK_IMPORTED_MODULE_3__/* ["default"] */ .Z.get('login');
+      if (name !== undefined) {
+        cookies = [{
+          value: name
+        }];
+      }
+    }
+  } catch (e) {
+    console.error(e);
   }
   const userName = cookies?.[0]?.value;
   const saneTwitchChat = new SaneTwitchChat(userName);
