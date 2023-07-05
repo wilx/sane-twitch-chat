@@ -1,6 +1,7 @@
 import { LRUCache } from 'lru-cache';
 import 'arrive';
 import Graphemer from 'graphemer';
+import Cookies from 'js-cookie';
 
 /**
  * This determines timeout of how long will fast chat cache keep recent messages.
@@ -217,7 +218,16 @@ async function start () {
     } catch (e) {
         if (e === 'not supported') {
             // Some implementation might not support GM.cookie interface.
-            console.warn('GM.cookie not supported');
+            console.warn('GM.cookie not supported, falling back to document.cookie');
+
+            try {
+                const name = Cookies.get('login');
+                if (name !== undefined) {
+                    cookies = [{ value: name }];
+                }
+            } catch (e) {
+                console.error(e);
+            }
         } else {
             console.error(e);
         }
