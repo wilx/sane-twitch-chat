@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.453
+// @version     1.0.458
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -683,7 +683,7 @@ async function start() {
   let cookies;
   try {
     cookies = await GM.cookie.list({
-      name: 'name'
+      name: 'login'
     });
     console.log('I have the cookie jar');
   } catch (e) {
@@ -14052,7 +14052,7 @@ class LRUCache {
         const pcall = (res, rej) => {
             const fmp = this.#fetchMethod?.(k, v, fetchOpts);
             if (fmp && fmp instanceof Promise) {
-                fmp.then(v => res(v), rej);
+                fmp.then(v => res(v === undefined ? undefined : v), rej);
             }
             // ignored, we go until we finish, regardless.
             // defer check until we are actually aborting,
@@ -14060,7 +14060,7 @@ class LRUCache {
             ac.signal.addEventListener('abort', () => {
                 if (!options.ignoreFetchAbort ||
                     options.allowStaleOnFetchAbort) {
-                    res();
+                    res(undefined);
                     // when it eventually resolves, update the cache.
                     if (options.allowStaleOnFetchAbort) {
                         res = v => cb(v, true);
@@ -14390,7 +14390,7 @@ class LRUCache {
 /******/ 		var webpackExports = typeof Symbol === "function" ? Symbol("webpack exports") : "__webpack_exports__";
 /******/ 		var webpackError = typeof Symbol === "function" ? Symbol("webpack error") : "__webpack_error__";
 /******/ 		var resolveQueue = (queue) => {
-/******/ 			if(queue && !queue.d) {
+/******/ 			if(queue && queue.d < 1) {
 /******/ 				queue.d = 1;
 /******/ 				queue.forEach((fn) => (fn.r--));
 /******/ 				queue.forEach((fn) => (fn.r-- ? fn.r++ : fn()));
@@ -14421,7 +14421,7 @@ class LRUCache {
 /******/ 		}));
 /******/ 		__webpack_require__.a = (module, body, hasAwait) => {
 /******/ 			var queue;
-/******/ 			hasAwait && ((queue = []).d = 1);
+/******/ 			hasAwait && ((queue = []).d = -1);
 /******/ 			var depQueues = new Set();
 /******/ 			var exports = module.exports;
 /******/ 			var currentDeps;
@@ -14449,7 +14449,7 @@ class LRUCache {
 /******/ 				});
 /******/ 				return fn.r ? promise : getResult();
 /******/ 			}, (err) => ((err ? reject(promise[webpackError] = err) : outerResolve(exports)), resolveQueue(queue)));
-/******/ 			queue && (queue.d = 0);
+/******/ 			queue && queue.d < 0 && (queue.d = 0);
 /******/ 		};
 /******/ 	})();
 /******/ 	

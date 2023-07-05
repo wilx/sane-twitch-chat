@@ -212,7 +212,7 @@ class SaneTwitchChat {
 async function start () {
     let cookies;
     try {
-        cookies = await GM.cookie.list({ name: 'name' });
+        cookies = await GM.cookie.list({ name: 'login' });
         console.log('I have the cookie jar');
     } catch (e) {
         if (e === 'not supported') {
