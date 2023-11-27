@@ -1,6 +1,6 @@
 {
   "name": "sane-twitch-chat",
-  "version": "1.0.473",
+  "version": "1.0.474",
   "description": "Twitch chat sanitizer.",
   "license": "BSD-2-Clause",
   "homepage": "https://github.com/wilx/sane-twitch-chat",
@@ -63,10 +63,6 @@
     "webpack-cli": "^5.1.4",
     "webpack-userscript": "^3.2.2",
     "yarn-audit-html": "^7.3.2"
-  },
-  "resolutions": {
-    "lodash": "^4.17.20",
-    "axios": "^1.2.2"
   },
   "browserslist": {
     "production": [
