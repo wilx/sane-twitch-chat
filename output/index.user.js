@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.470
+// @version     1.0.473
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -490,7 +490,7 @@ var Arrive = (function(window, $, undefined) {
 "use strict";
 __webpack_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 /* unused harmony exports start, SaneTwitchChat */
-/* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(609);
+/* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(406);
 /* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(640);
 /* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(arrive__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(777);
@@ -13115,7 +13115,7 @@ var api = init(defaultConverter, { path: '/' });
 
 /***/ }),
 
-/***/ 609:
+/***/ 406:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -13556,6 +13556,9 @@ class LRUCache {
             if (ttls[index]) {
                 const ttl = ttls[index];
                 const start = starts[index];
+                /* c8 ignore next */
+                if (!ttl || !start)
+                    return;
                 status.ttl = ttl;
                 status.start = start;
                 status.now = cachedNow || getNow();
@@ -13587,16 +13590,16 @@ class LRUCache {
             }
             const ttl = ttls[index];
             const start = starts[index];
-            if (ttl === 0 || start === 0) {
+            if (!ttl || !start) {
                 return Infinity;
             }
             const age = (cachedNow || getNow()) - start;
             return ttl - age;
         };
         this.#isStale = index => {
-            return (ttls[index] !== 0 &&
-                starts[index] !== 0 &&
-                (cachedNow || getNow()) - starts[index] > ttls[index]);
+            const s = starts[index];
+            const t = ttls[index];
+            return !!t && !!s && (cachedNow || getNow()) - s > t;
         };
     }
     // conditionally set private methods related to TTL
@@ -13853,6 +13856,37 @@ class LRUCache {
             }
         }
         return deleted;
+    }
+    /**
+     * Get the extended info about a given entry, to get its value, size, and
+     * TTL info simultaneously. Like {@link LRUCache#dump}, but just for a
+     * single key. Always returns stale values, if their info is found in the
+     * cache, so be sure to check for expired TTLs if relevant.
+     */
+    info(key) {
+        const i = this.#keyMap.get(key);
+        if (i === undefined)
+            return undefined;
+        const v = this.#valList[i];
+        const value = this.#isBackgroundFetch(v)
+            ? v.__staleWhileFetching
+            : v;
+        if (value === undefined)
+            return undefined;
+        const entry = { value };
+        if (this.#ttls && this.#starts) {
+            const ttl = this.#ttls[i];
+            const start = this.#starts[i];
+            if (ttl && start) {
+                const remain = ttl - (perf.now() - start);
+                entry.ttl = remain;
+                entry.start = Date.now();
+            }
+        }
+        if (this.#sizes) {
+            entry.size = this.#sizes[i];
+        }
+        return entry;
     }
     /**
      * Return an array of [key, {@link LRUCache.Entry}] tuples which can be
@@ -14120,12 +14154,13 @@ class LRUCache {
     peek(k, peekOptions = {}) {
         const { allowStale = this.allowStale } = peekOptions;
         const index = this.#keyMap.get(k);
-        if (index !== undefined &&
-            (allowStale || !this.#isStale(index))) {
-            const v = this.#valList[index];
-            // either stale and allowed, or forcing a refresh of non-stale value
-            return this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
+        if (index === undefined ||
+            (!allowStale && this.#isStale(index))) {
+            return;
         }
+        const v = this.#valList[index];
+        // either stale and allowed, or forcing a refresh of non-stale value
+        return this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
     }
     #backgroundFetch(k, index, options, context) {
         const v = index === undefined ? undefined : this.#valList[index];
@@ -14461,8 +14496,10 @@ class LRUCache {
                         this.#head = this.#next[index];
                     }
                     else {
-                        this.#next[this.#prev[index]] = this.#next[index];
-                        this.#prev[this.#next[index]] = this.#prev[index];
+                        const pi = this.#prev[index];
+                        this.#next[pi] = this.#next[index];
+                        const ni = this.#next[index];
+                        this.#prev[ni] = this.#prev[index];
                     }
                     this.#size--;
                     this.#free.push(index);
