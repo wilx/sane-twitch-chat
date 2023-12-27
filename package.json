@@ -21,7 +21,7 @@
   ],
   "dependencies": {
     "arrive": "^2.4.1",
-    "axios": "^1.6.2",
+    "axios": "^1.6.3",
     "core-js": "^3.34.0",
     "graphemer": "^1.4.0",
     "js-cookie": "^3.0.5",
