@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.477
+// @version     1.0.479
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -13794,6 +13794,11 @@ class LRUCache {
     [Symbol.iterator]() {
         return this.entries();
     }
+    /**
+     * A String value that is used in the creation of the default string description of an object.
+     * Called by the built-in method Object.prototype.toString.
+     */
+    [Symbol.toStringTag] = 'LRUCache';
     /**
      * Find a value for which the supplied fn method returns a truthy value,
      * similar to Array.find().  fn is called as fn(value, key, cache).
