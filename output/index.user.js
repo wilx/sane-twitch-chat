@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.479
+// @version     1.0.480
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -17,7 +17,7 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 640:
+/***/ 720:
 /***/ (() => {
 
 /*globals jQuery,Window,HTMLElement,HTMLDocument,HTMLCollection,NodeList,MutationObserver */
@@ -484,18 +484,18 @@ var Arrive = (function(window, $, undefined) {
 
 /***/ }),
 
-/***/ 352:
+/***/ 776:
 /***/ ((module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 /* unused harmony exports start, SaneTwitchChat */
-/* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(406);
-/* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(640);
+/* harmony import */ var lru_cache__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(469);
+/* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(720);
 /* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(arrive__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(777);
+/* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(936);
 /* harmony import */ var graphemer__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(graphemer__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var js_cookie__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(955);
+/* harmony import */ var js_cookie__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(272);
 
 
 
@@ -561,13 +561,13 @@ const EMOTE_ANIMATION_STYLE = `
 class SaneTwitchChat {
   #userName = null;
   #prevMessage = null;
-  #fastChatCache = new lru_cache__WEBPACK_IMPORTED_MODULE_0__/* .LRUCache */ .z({
+  #fastChatCache = new lru_cache__WEBPACK_IMPORTED_MODULE_0__/* .LRUCache */ .o({
     max: FAST_CHAT_CACHE_SIZE,
     ttl: FAST_CHAT_CACHE_TIMEOUT,
     updateAgeOnGet: true,
     ttlResolution: 100
   });
-  #longChatCache = new lru_cache__WEBPACK_IMPORTED_MODULE_0__/* .LRUCache */ .z({
+  #longChatCache = new lru_cache__WEBPACK_IMPORTED_MODULE_0__/* .LRUCache */ .o({
     max: LONG_CHAT_CACHE_SIZE,
     ttl: LONG_CHAT_CACHE_TIMEOUT,
     updateAgeOnGet: true,
@@ -698,7 +698,7 @@ async function start() {
   }
   try {
     if (cookies === undefined) {
-      const name = js_cookie__WEBPACK_IMPORTED_MODULE_3__/* ["default"] */ .Z.get('login');
+      const name = js_cookie__WEBPACK_IMPORTED_MODULE_3__/* ["default"] */ .c.get('login');
       if (name !== undefined) {
         cookies = [{
           value: name
@@ -721,7 +721,7 @@ __webpack_async_result__();
 
 /***/ }),
 
-/***/ 553:
+/***/ 904:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -730,9 +730,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const boundaries_1 = __webpack_require__(658);
-const GraphemerHelper_1 = __importDefault(__webpack_require__(257));
-const GraphemerIterator_1 = __importDefault(__webpack_require__(670));
+const boundaries_1 = __webpack_require__(404);
+const GraphemerHelper_1 = __importDefault(__webpack_require__(568));
+const GraphemerIterator_1 = __importDefault(__webpack_require__(280));
 class Graphemer {
     /**
      * Returns the next grapheme break in the string after the given index
@@ -12688,13 +12688,13 @@ exports["default"] = Graphemer;
 
 /***/ }),
 
-/***/ 257:
+/***/ 568:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const boundaries_1 = __webpack_require__(658);
+const boundaries_1 = __webpack_require__(404);
 // BreakTypes
 // @type {BreakType}
 const NotBreak = 0;
@@ -12865,7 +12865,7 @@ exports["default"] = GraphemerHelper;
 
 /***/ }),
 
-/***/ 670:
+/***/ 280:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -12909,7 +12909,7 @@ exports["default"] = GraphemerIterator;
 
 /***/ }),
 
-/***/ 658:
+/***/ 404:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -12955,7 +12955,7 @@ exports.EXTENDED_PICTOGRAPHIC = 101;
 
 /***/ }),
 
-/***/ 777:
+/***/ 936:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -12964,18 +12964,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const Graphemer_1 = __importDefault(__webpack_require__(553));
+const Graphemer_1 = __importDefault(__webpack_require__(904));
 exports["default"] = Graphemer_1.default;
 
 
 /***/ }),
 
-/***/ 955:
+/***/ 272:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   Z: () => (/* binding */ api)
+/* harmony export */   c: () => (/* binding */ api)
 /* harmony export */ });
 /*! js-cookie v3.0.5 | MIT */
 /* eslint-disable no-var */
@@ -13115,12 +13115,12 @@ var api = init(defaultConverter, { path: '/' });
 
 /***/ }),
 
-/***/ 406:
+/***/ 469:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   z: () => (/* binding */ LRUCache)
+/* harmony export */   o: () => (/* binding */ LRUCache)
 /* harmony export */ });
 /**
  * @module LRUCache
@@ -14697,7 +14697,7 @@ class LRUCache {
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module used 'module' so it can't be inlined
-/******/ 	var __webpack_exports__ = __webpack_require__(352);
+/******/ 	var __webpack_exports__ = __webpack_require__(776);
 /******/ 	
 /******/ })()
 ;
