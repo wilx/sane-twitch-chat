@@ -25,7 +25,7 @@
     "core-js": "^3.36.1",
     "graphemer": "^1.4.0",
     "js-cookie": "^3.0.5",
-    "lru-cache": "^10.2.1"
+    "lru-cache": "^10.3.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.23.9",
