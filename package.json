@@ -22,10 +22,10 @@
   "dependencies": {
     "arrive": "^2.4.1",
     "axios": "^1.6.8",
-    "core-js": "^3.36.0",
+    "core-js": "^3.36.1",
     "graphemer": "^1.4.0",
     "js-cookie": "^3.0.5",
-    "lru-cache": "^10.2.0"
+    "lru-cache": "^10.2.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.23.9",
