@@ -51,7 +51,8 @@ module.exports = {
     },
     devtool: 'source-map',
     optimization: {
-        minimize: false
+        minimize: false,
+        usedExports: true
     },
     plugins: [
         new us.UserscriptPlugin({
