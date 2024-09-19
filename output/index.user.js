@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.495
+// @version     1.0.497
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -537,7 +537,7 @@ const HIDE_MESSAGE_ANIM_OPTS = {
   duration: 500,
   fill: 'forwards'
 };
-const SPLITTER = new Intl.Segmenter(new Intl.Locale(), {
+const SPLITTER = new Intl.Segmenter(new Intl.Locale('en'), {
   granularity: 'grapheme'
 });
 const EMOTE_ANIMATION_STYLE = `

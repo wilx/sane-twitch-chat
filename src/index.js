@@ -45,7 +45,7 @@ const HIDE_MESSAGE_KEYFRAMES = [
 
 const HIDE_MESSAGE_ANIM_OPTS = { duration: 500, fill: 'forwards' };
 
-const SPLITTER = new Intl.Segmenter(new Intl.Locale(), { granularity: 'grapheme' });
+const SPLITTER = new Intl.Segmenter(new Intl.Locale('en'), { granularity: 'grapheme' });
 
 const EMOTE_ANIMATION_STYLE = `
 .chat-line__message--emote:hover,
