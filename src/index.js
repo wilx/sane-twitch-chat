@@ -211,7 +211,8 @@ class SaneTwitchChat {
 
 async function start () {
     let cookies;
-    if (typeof GM !== 'undefined') {
+    if (typeof GM !== 'undefined'
+        && typeof GM.cookie !== 'undefined') {
         try {
             cookies = await GM.cookie.list({ name: 'login' });
             console.log('I have the cookie jar from GM.cookies');

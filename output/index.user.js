@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.499
+// @version     1.0.500
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -682,7 +682,7 @@ class SaneTwitchChat {
 }
 async function start() {
   let cookies;
-  if (typeof GM != 'undefined') {
+  if (typeof GM != 'undefined' && typeof GM.cookie != 'undefined') {
     try {
       cookies = await GM.cookie.list({
         name: 'login'
