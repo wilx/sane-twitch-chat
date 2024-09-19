@@ -1,6 +1,5 @@
 import { LRUCache } from 'lru-cache';
 import 'arrive';
-import Graphemer from 'graphemer';
 import Cookies from 'js-cookie';
 
 /**
@@ -46,7 +45,7 @@ const HIDE_MESSAGE_KEYFRAMES = [
 
 const HIDE_MESSAGE_ANIM_OPTS = { duration: 500, fill: 'forwards' };
 
-const SPLITTER = new Graphemer();
+const SPLITTER = new Intl.Segmenter(new Intl.Locale(), { granularity: 'grapheme' });
 
 const EMOTE_ANIMATION_STYLE = `
 .chat-line__message--emote:hover,
@@ -130,7 +129,7 @@ class SaneTwitchChat {
         }
 
         // Filter long chat messages which repeat within longer period of time.
-        const combinedMessageLength = SPLITTER.countGraphemes(combinedMessage);
+        const combinedMessageLength = Array.from(SPLITTER.segment(combinedMessage)).length;
         if (combinedMessageLength >= LONG_CHAT_THRESHOLD_LENGTH) {
             const longCachedNode = this.#longChatCache.get(combinedMessage);
             if (longCachedNode !== undefined
