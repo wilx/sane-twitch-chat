@@ -1,6 +1,6 @@
 {
   "name": "sane-twitch-chat",
-  "version": "1.0.502",
+  "version": "1.0.504",
   "description": "Twitch chat sanitizer.",
   "license": "BSD-2-Clause",
   "homepage": "https://github.com/wilx/sane-twitch-chat",
@@ -76,9 +76,10 @@
     ]
   },
   "scripts": {
-    "build": "yarn version --patch --no-commit-hooks --no-git-tag-version && yarn eslint src/** && yarn webpack",
+    "build": "yarn version patch -i && yarn eslint src/** && yarn webpack",
     "build-compat": "BROWSERSLIST_ENV=compat yarn build",
-    "audit-html": "yarn audit --group \"dependencies bundledDependencies\" --json | yarn-audit-html -o output/sane-twitch-chat.audit.html"
+    "audit-html": "yarn npm audit -R --environment production"
   },
-  "babel": {}
+  "babel": {},
+  "packageManager": "yarn@4.5.0+sha512.837566d24eec14ec0f5f1411adb544e892b3454255e61fdef8fd05f3429480102806bac7446bc9daff3896b01ae4b62d00096c7e989f1596f2af10b927532f39"
 }
