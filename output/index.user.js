@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.531
+// @version     1.0.535
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -1679,7 +1679,7 @@ class LRUCache {
     }
     /**
      * Return an array of [key, {@link LRUCache.Entry}] tuples which can be
-     * passed to {@link LRLUCache#load}.
+     * passed to {@link LRUCache#load}.
      *
      * The `start` fields are calculated relative to a portable `Date.now()`
      * timestamp, even if `performance.now()` is available.
