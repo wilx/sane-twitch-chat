@@ -20,7 +20,7 @@
     "greasemonkey"
   ],
   "dependencies": {
-    "arrive": "^2.4.1",
+    "arrive": "^2.5.1",
     "axios": "^1.7.7",
     "core-js": "^3.39.0",
     "js-cookie": "^3.0.5",
