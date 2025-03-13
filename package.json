@@ -21,7 +21,7 @@
   ],
   "dependencies": {
     "arrive": "^2.5.2",
-    "axios": "^1.7.9",
+    "axios": "^1.8.2",
     "core-js": "^3.40.0",
     "js-cookie": "^3.0.5",
     "lru-cache": "^11.0.2"
