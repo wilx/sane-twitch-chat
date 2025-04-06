@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.547
+// @version     1.0.549
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -170,6 +170,7 @@ class LRUCache {
     #max;
     #maxSize;
     #dispose;
+    #onInsert;
     #disposeAfter;
     #fetchMethod;
     #memoMethod;
@@ -251,6 +252,7 @@ class LRUCache {
     #hasDispose;
     #hasFetchMethod;
     #hasDisposeAfter;
+    #hasOnInsert;
     /**
      * Do not call this method unless you need to inspect the
      * inner workings of the cache.  If anything returned by this
@@ -328,13 +330,19 @@ class LRUCache {
         return this.#dispose;
     }
     /**
+     * {@link LRUCache.OptionsBase.onInsert} (read-only)
+     */
+    get onInsert() {
+        return this.#onInsert;
+    }
+    /**
      * {@link LRUCache.OptionsBase.disposeAfter} (read-only)
      */
     get disposeAfter() {
         return this.#disposeAfter;
     }
     constructor(options) {
-        const { max = 0, ttl, ttlResolution = 1, ttlAutopurge, updateAgeOnGet, updateAgeOnHas, allowStale, dispose, disposeAfter, noDisposeOnSet, noUpdateTTL, maxSize = 0, maxEntrySize = 0, sizeCalculation, fetchMethod, memoMethod, noDeleteOnFetchRejection, noDeleteOnStaleGet, allowStaleOnFetchRejection, allowStaleOnFetchAbort, ignoreFetchAbort, } = options;
+        const { max = 0, ttl, ttlResolution = 1, ttlAutopurge, updateAgeOnGet, updateAgeOnHas, allowStale, dispose, onInsert, disposeAfter, noDisposeOnSet, noUpdateTTL, maxSize = 0, maxEntrySize = 0, sizeCalculation, fetchMethod, memoMethod, noDeleteOnFetchRejection, noDeleteOnStaleGet, allowStaleOnFetchRejection, allowStaleOnFetchAbort, ignoreFetchAbort, } = options;
         if (max !== 0 && !isPosInt(max)) {
             throw new TypeError('max option must be a nonnegative integer');
         }
@@ -378,6 +386,9 @@ class LRUCache {
         if (typeof dispose === 'function') {
             this.#dispose = dispose;
         }
+        if (typeof onInsert === 'function') {
+            this.#onInsert = onInsert;
+        }
         if (typeof disposeAfter === 'function') {
             this.#disposeAfter = disposeAfter;
             this.#disposed = [];
@@ -387,6 +398,7 @@ class LRUCache {
             this.#disposed = undefined;
         }
         this.#hasDispose = !!this.#dispose;
+        this.#hasOnInsert = !!this.#onInsert;
         this.#hasDisposeAfter = !!this.#disposeAfter;
         this.noDisposeOnSet = !!noDisposeOnSet;
         this.noUpdateTTL = !!noUpdateTTL;
@@ -954,6 +966,9 @@ class LRUCache {
             if (status)
                 status.set = 'add';
             noUpdateTTL = false;
+            if (this.#hasOnInsert) {
+                this.#onInsert?.(v, k, 'add');
+            }
         }
         else {
             // update
@@ -994,6 +1009,9 @@ class LRUCache {
             }
             else if (status) {
                 status.set = 'update';
+            }
+            if (this.#hasOnInsert) {
+                this.onInsert?.(v, k, v === oldVal ? 'update' : 'replace');
             }
         }
         if (ttl !== 0 && !this.#ttls) {
