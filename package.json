@@ -1,6 +1,6 @@
 {
   "name": "sane-twitch-chat",
-  "version": "1.0.553",
+  "version": "1.0.555",
   "description": "Twitch chat sanitizer.",
   "license": "BSD-2-Clause",
   "homepage": "https://github.com/wilx/sane-twitch-chat",
@@ -33,8 +33,6 @@
     "@babel/preset-env": "^7.27.2",
     "@eslint/migrate-config": "^1.5.2",
     "@types/arrive": "^2.4.4",
-    "@webpack-cli/info": "^3.0.1",
-    "@webpack-cli/migrate": "^1.1.2",
     "babel-helper-flip-expressions": "^0.4.3",
     "babel-loader": "^10.0.0",
     "babel-plugin-minify-constant-folding": "^0.5.0",
