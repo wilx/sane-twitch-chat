@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.557
+// @version     1.0.558
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -27,18 +27,20 @@
 /**
  * @module LRUCache
  */
-const perf = typeof performance === 'object' &&
+const defaultPerf = (typeof performance === 'object' &&
     performance &&
-    typeof performance.now === 'function'
-    ? performance
+    typeof performance.now === 'function') ?
+    performance
     : Date;
 const warned = new Set();
 /* c8 ignore start */
-const PROCESS = (typeof process === 'object' && !!process ? process : {});
+const PROCESS = (typeof process === 'object' && !!process ?
+    process
+    : {});
 /* c8 ignore start */
 const emitWarning = (msg, type, code, fn) => {
-    typeof PROCESS.emitWarning === 'function'
-        ? PROCESS.emitWarning(msg, type, code, fn)
+    typeof PROCESS.emitWarning === 'function' ?
+        PROCESS.emitWarning(msg, type, code, fn)
         : console.error(`[${code}] ${type}: ${msg}`);
 };
 let AC = globalThis.AbortController;
@@ -102,16 +104,11 @@ const isPosInt = (n) => n && n === Math.floor(n) && n > 0 && isFinite(n);
 // zeroes at init time is brutal when you get that big.
 // But why not be complete?
 // Maybe in the future, these limits will have expanded.
-const getUintArray = (max) => !isPosInt(max)
-    ? null
-    : max <= Math.pow(2, 8)
-        ? Uint8Array
-        : max <= Math.pow(2, 16)
-            ? Uint16Array
-            : max <= Math.pow(2, 32)
-                ? Uint32Array
-                : max <= Number.MAX_SAFE_INTEGER
-                    ? ZeroArray
+const getUintArray = (max) => !isPosInt(max) ? null
+    : max <= Math.pow(2, 8) ? Uint8Array
+        : max <= Math.pow(2, 16) ? Uint16Array
+            : max <= Math.pow(2, 32) ? Uint32Array
+                : max <= Number.MAX_SAFE_INTEGER ? ZeroArray
                     : null;
 /* c8 ignore stop */
 class ZeroArray extends Array {
@@ -174,6 +171,13 @@ class LRUCache {
     #disposeAfter;
     #fetchMethod;
     #memoMethod;
+    #perf;
+    /**
+     * {@link LRUCache.OptionsBase.perf}
+     */
+    get perf() {
+        return this.#perf;
+    }
     /**
      * {@link LRUCache.OptionsBase.ttl}
      */
@@ -342,7 +346,13 @@ class LRUCache {
         return this.#disposeAfter;
     }
     constructor(options) {
-        const { max = 0, ttl, ttlResolution = 1, ttlAutopurge, updateAgeOnGet, updateAgeOnHas, allowStale, dispose, onInsert, disposeAfter, noDisposeOnSet, noUpdateTTL, maxSize = 0, maxEntrySize = 0, sizeCalculation, fetchMethod, memoMethod, noDeleteOnFetchRejection, noDeleteOnStaleGet, allowStaleOnFetchRejection, allowStaleOnFetchAbort, ignoreFetchAbort, } = options;
+        const { max = 0, ttl, ttlResolution = 1, ttlAutopurge, updateAgeOnGet, updateAgeOnHas, allowStale, dispose, onInsert, disposeAfter, noDisposeOnSet, noUpdateTTL, maxSize = 0, maxEntrySize = 0, sizeCalculation, fetchMethod, memoMethod, noDeleteOnFetchRejection, noDeleteOnStaleGet, allowStaleOnFetchRejection, allowStaleOnFetchAbort, ignoreFetchAbort, perf, } = options;
+        if (perf !== undefined) {
+            if (typeof perf?.now !== 'function') {
+                throw new TypeError('perf option must have a now() method if specified');
+            }
+        }
+        this.#perf = perf ?? defaultPerf;
         if (max !== 0 && !isPosInt(max)) {
             throw new TypeError('max option must be a nonnegative integer');
         }
@@ -423,8 +433,8 @@ class LRUCache {
         this.updateAgeOnGet = !!updateAgeOnGet;
         this.updateAgeOnHas = !!updateAgeOnHas;
         this.ttlResolution =
-            isPosInt(ttlResolution) || ttlResolution === 0
-                ? ttlResolution
+            isPosInt(ttlResolution) || ttlResolution === 0 ?
+                ttlResolution
                 : 1;
         this.ttlAutopurge = !!ttlAutopurge;
         this.ttl = ttl || 0;
@@ -460,7 +470,7 @@ class LRUCache {
         const starts = new ZeroArray(this.#max);
         this.#ttls = ttls;
         this.#starts = starts;
-        this.#setItemTTL = (index, ttl, start = perf.now()) => {
+        this.#setItemTTL = (index, ttl, start = this.#perf.now()) => {
             starts[index] = ttl !== 0 ? start : 0;
             ttls[index] = ttl;
             if (ttl !== 0 && this.ttlAutopurge) {
@@ -478,7 +488,7 @@ class LRUCache {
             }
         };
         this.#updateItemAge = index => {
-            starts[index] = ttls[index] !== 0 ? perf.now() : 0;
+            starts[index] = ttls[index] !== 0 ? this.#perf.now() : 0;
         };
         this.#statusTTL = (status, index) => {
             if (ttls[index]) {
@@ -498,7 +508,7 @@ class LRUCache {
         // that costly call repeatedly.
         let cachedNow = 0;
         const getNow = () => {
-            const n = perf.now();
+            const n = this.#perf.now();
             if (this.ttlResolution > 0) {
                 cachedNow = n;
                 const t = setTimeout(() => (cachedNow = 0), this.ttlResolution);
@@ -735,9 +745,7 @@ class LRUCache {
     find(fn, getOptions = {}) {
         for (const i of this.#indexes()) {
             const v = this.#valList[i];
-            const value = this.#isBackgroundFetch(v)
-                ? v.__staleWhileFetching
-                : v;
+            const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
             if (value === undefined)
                 continue;
             if (fn(value, this.#keyList[i], this)) {
@@ -759,9 +767,7 @@ class LRUCache {
     forEach(fn, thisp = this) {
         for (const i of this.#indexes()) {
             const v = this.#valList[i];
-            const value = this.#isBackgroundFetch(v)
-                ? v.__staleWhileFetching
-                : v;
+            const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
             if (value === undefined)
                 continue;
             fn.call(thisp, value, this.#keyList[i], this);
@@ -774,9 +780,7 @@ class LRUCache {
     rforEach(fn, thisp = this) {
         for (const i of this.#rindexes()) {
             const v = this.#valList[i];
-            const value = this.#isBackgroundFetch(v)
-                ? v.__staleWhileFetching
-                : v;
+            const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
             if (value === undefined)
                 continue;
             fn.call(thisp, value, this.#keyList[i], this);
@@ -813,17 +817,18 @@ class LRUCache {
         if (i === undefined)
             return undefined;
         const v = this.#valList[i];
-        const value = this.#isBackgroundFetch(v)
-            ? v.__staleWhileFetching
-            : v;
+        /* c8 ignore start - this isn't tested for the info function,
+         * but it's the same logic as found in other places. */
+        const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
         if (value === undefined)
             return undefined;
+        /* c8 ignore end */
         const entry = { value };
         if (this.#ttls && this.#starts) {
             const ttl = this.#ttls[i];
             const start = this.#starts[i];
             if (ttl && start) {
-                const remain = ttl - (perf.now() - start);
+                const remain = ttl - (this.#perf.now() - start);
                 entry.ttl = remain;
                 entry.start = Date.now();
             }
@@ -851,9 +856,7 @@ class LRUCache {
         for (const i of this.#indexes({ allowStale: true })) {
             const key = this.#keyList[i];
             const v = this.#valList[i];
-            const value = this.#isBackgroundFetch(v)
-                ? v.__staleWhileFetching
-                : v;
+            const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
             if (value === undefined || key === undefined)
                 continue;
             const entry = { value };
@@ -861,7 +864,7 @@ class LRUCache {
                 entry.ttl = this.#ttls[i];
                 // always dump the start relative to a portable timestamp
                 // it's ok for this to be a bit slow, it's a rare operation.
-                const age = perf.now() - this.#starts[i];
+                const age = this.#perf.now() - this.#starts[i];
                 entry.start = Math.floor(Date.now() - age);
             }
             if (this.#sizes) {
@@ -891,7 +894,7 @@ class LRUCache {
                 //
                 // it's ok for this to be a bit slow, it's a rare operation.
                 const age = Date.now() - entry.start;
-                entry.start = perf.now() - age;
+                entry.start = this.#perf.now() - age;
             }
             this.set(key, entry.value, entry);
         }
@@ -948,12 +951,9 @@ class LRUCache {
         let index = this.#size === 0 ? undefined : this.#keyMap.get(k);
         if (index === undefined) {
             // addition
-            index = (this.#size === 0
-                ? this.#tail
-                : this.#free.length !== 0
-                    ? this.#free.pop()
-                    : this.#size === this.#max
-                        ? this.#evict(false)
+            index = (this.#size === 0 ? this.#tail
+                : this.#free.length !== 0 ? this.#free.pop()
+                    : this.#size === this.#max ? this.#evict(false)
                         : this.#size);
             this.#keyList[index] = k;
             this.#valList[index] = v;
@@ -1000,8 +1000,8 @@ class LRUCache {
                 this.#valList[index] = v;
                 if (status) {
                     status.set = 'replace';
-                    const oldValue = oldVal && this.#isBackgroundFetch(oldVal)
-                        ? oldVal.__staleWhileFetching
+                    const oldValue = oldVal && this.#isBackgroundFetch(oldVal) ?
+                        oldVal.__staleWhileFetching
                         : oldVal;
                     if (oldValue !== undefined)
                         status.oldValue = oldValue;
@@ -1195,7 +1195,7 @@ class LRUCache {
             const bf = p;
             if (this.#valList[index] === p) {
                 if (v === undefined) {
-                    if (bf.__staleWhileFetching) {
+                    if (bf.__staleWhileFetching !== undefined) {
                         this.#valList[index] = bf.__staleWhileFetching;
                     }
                     else {
