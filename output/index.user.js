@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.558
+// @version     1.0.559
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -1193,7 +1193,11 @@ class LRUCache {
             }
             // either we didn't abort, and are still here, or we did, and ignored
             const bf = p;
-            if (this.#valList[index] === p) {
+            // if nothing else has been written there but we're set to update the
+            // cache and ignore the abort, or if it's still pending on this specific
+            // background request, then write it to the cache.
+            const vl = this.#valList[index];
+            if (vl === p || ignoreAbort && updateCache && vl === undefined) {
                 if (v === undefined) {
                     if (bf.__staleWhileFetching !== undefined) {
                         this.#valList[index] = bf.__staleWhileFetching;
