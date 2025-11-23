@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.559
+// @version     1.0.560
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -2528,7 +2528,6 @@ var api = init(defaultConverter, { path: '/' });
 /******/ 		var webpackQueues = hasSymbol ? Symbol("webpack queues") : "__webpack_queues__";
 /******/ 		var webpackExports = hasSymbol ? Symbol("webpack exports") : "__webpack_exports__";
 /******/ 		var webpackError = hasSymbol ? Symbol("webpack error") : "__webpack_error__";
-/******/ 		
 /******/ 		
 /******/ 		var resolveQueue = (queue) => {
 /******/ 			if(queue && queue.d < 1) {
