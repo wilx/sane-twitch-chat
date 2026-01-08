@@ -23,7 +23,7 @@
     "arrive": "^2.5.2",
     "core-js": "^3.47.0",
     "js-cookie": "^3.0.5",
-    "lru-cache": "^11.2.2"
+    "lru-cache": "^11.2.4"
   },
   "devDependencies": {
     "@babel/cli": "^7.28.3",
