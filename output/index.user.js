@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.560
+// @version     1.0.562
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -17,8 +17,8 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 303:
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+/***/ 303
+(__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
@@ -253,6 +253,7 @@ class LRUCache {
     #sizes;
     #starts;
     #ttls;
+    #autopurgeTimers;
     #hasDispose;
     #hasFetchMethod;
     #hasDisposeAfter;
@@ -271,6 +272,7 @@ class LRUCache {
             // properties
             starts: c.#starts,
             ttls: c.#ttls,
+            autopurgeTimers: c.#autopurgeTimers,
             sizes: c.#sizes,
             keyMap: c.#keyMap,
             keyList: c.#keyList,
@@ -372,13 +374,11 @@ class LRUCache {
                 throw new TypeError('sizeCalculation set to non-function');
             }
         }
-        if (memoMethod !== undefined &&
-            typeof memoMethod !== 'function') {
+        if (memoMethod !== undefined && typeof memoMethod !== 'function') {
             throw new TypeError('memoMethod must be a function if defined');
         }
         this.#memoMethod = memoMethod;
-        if (fetchMethod !== undefined &&
-            typeof fetchMethod !== 'function') {
+        if (fetchMethod !== undefined && typeof fetchMethod !== 'function') {
             throw new TypeError('fetchMethod must be a function if specified');
         }
         this.#fetchMethod = fetchMethod;
@@ -433,9 +433,7 @@ class LRUCache {
         this.updateAgeOnGet = !!updateAgeOnGet;
         this.updateAgeOnHas = !!updateAgeOnHas;
         this.ttlResolution =
-            isPosInt(ttlResolution) || ttlResolution === 0 ?
-                ttlResolution
-                : 1;
+            isPosInt(ttlResolution) || ttlResolution === 0 ? ttlResolution : 1;
         this.ttlAutopurge = !!ttlAutopurge;
         this.ttl = ttl || 0;
         if (this.ttl) {
@@ -470,10 +468,21 @@ class LRUCache {
         const starts = new ZeroArray(this.#max);
         this.#ttls = ttls;
         this.#starts = starts;
+        const purgeTimers = this.ttlAutopurge ?
+            new Array(this.#max)
+            : undefined;
+        this.#autopurgeTimers = purgeTimers;
         this.#setItemTTL = (index, ttl, start = this.#perf.now()) => {
             starts[index] = ttl !== 0 ? start : 0;
             ttls[index] = ttl;
-            if (ttl !== 0 && this.ttlAutopurge) {
+            // clear out the purge timer if we're setting TTL to 0, and
+            // previously had a ttl purge timer running, so it doesn't
+            // fire unnecessarily.
+            if (purgeTimers?.[index]) {
+                clearTimeout(purgeTimers[index]);
+                purgeTimers[index] = undefined;
+            }
+            if (ttl !== 0 && purgeTimers) {
                 const t = setTimeout(() => {
                     if (this.#isStale(index)) {
                         this.#delete(this.#keyList[index], 'expire');
@@ -485,6 +494,7 @@ class LRUCache {
                     t.unref();
                 }
                 /* c8 ignore stop */
+                purgeTimers[index] = t;
             }
         };
         this.#updateItemAge = index => {
@@ -676,8 +686,7 @@ class LRUCache {
     *keys() {
         for (const i of this.#indexes()) {
             const k = this.#keyList[i];
-            if (k !== undefined &&
-                !this.#isBackgroundFetch(this.#valList[i])) {
+            if (k !== undefined && !this.#isBackgroundFetch(this.#valList[i])) {
                 yield k;
             }
         }
@@ -691,8 +700,7 @@ class LRUCache {
     *rkeys() {
         for (const i of this.#rindexes()) {
             const k = this.#keyList[i];
-            if (k !== undefined &&
-                !this.#isBackgroundFetch(this.#valList[i])) {
+            if (k !== undefined && !this.#isBackgroundFetch(this.#valList[i])) {
                 yield k;
             }
         }
@@ -704,8 +712,7 @@ class LRUCache {
     *values() {
         for (const i of this.#indexes()) {
             const v = this.#valList[i];
-            if (v !== undefined &&
-                !this.#isBackgroundFetch(this.#valList[i])) {
+            if (v !== undefined && !this.#isBackgroundFetch(this.#valList[i])) {
                 yield this.#valList[i];
             }
         }
@@ -719,8 +726,7 @@ class LRUCache {
     *rvalues() {
         for (const i of this.#rindexes()) {
             const v = this.#valList[i];
-            if (v !== undefined &&
-                !this.#isBackgroundFetch(this.#valList[i])) {
+            if (v !== undefined && !this.#isBackgroundFetch(this.#valList[i])) {
                 yield this.#valList[i];
             }
         }
@@ -1078,6 +1084,10 @@ class LRUCache {
             }
         }
         this.#removeItemSize(head);
+        if (this.#autopurgeTimers?.[head]) {
+            clearTimeout(this.#autopurgeTimers[head]);
+            this.#autopurgeTimers[head] = undefined;
+        }
         // if we aren't about to use the index, then null these out
         if (free) {
             this.#keyList[head] = undefined;
@@ -1150,8 +1160,7 @@ class LRUCache {
     peek(k, peekOptions = {}) {
         const { allowStale = this.allowStale } = peekOptions;
         const index = this.#keyMap.get(k);
-        if (index === undefined ||
-            (!allowStale && this.#isStale(index))) {
+        if (index === undefined || (!allowStale && this.#isStale(index))) {
             return;
         }
         const v = this.#valList[index];
@@ -1197,7 +1206,7 @@ class LRUCache {
             // cache and ignore the abort, or if it's still pending on this specific
             // background request, then write it to the cache.
             const vl = this.#valList[index];
-            if (vl === p || ignoreAbort && updateCache && vl === undefined) {
+            if (vl === p || (ignoreAbort && updateCache && vl === undefined)) {
                 if (v === undefined) {
                     if (bf.__staleWhileFetching !== undefined) {
                         this.#valList[index] = bf.__staleWhileFetching;
@@ -1261,8 +1270,7 @@ class LRUCache {
             // defer check until we are actually aborting,
             // so fetchMethod can override.
             ac.signal.addEventListener('abort', () => {
-                if (!options.ignoreFetchAbort ||
-                    options.allowStaleOnFetchAbort) {
+                if (!options.ignoreFetchAbort || options.allowStaleOnFetchAbort) {
                     res(undefined);
                     // when it eventually resolves, update the cache.
                     if (options.allowStaleOnFetchAbort) {
@@ -1494,6 +1502,10 @@ class LRUCache {
         if (this.#size !== 0) {
             const index = this.#keyMap.get(k);
             if (index !== undefined) {
+                if (this.#autopurgeTimers?.[index]) {
+                    clearTimeout(this.#autopurgeTimers?.[index]);
+                    this.#autopurgeTimers[index] = undefined;
+                }
                 deleted = true;
                 if (this.#size === 1) {
                     this.#clear(reason);
@@ -1569,6 +1581,11 @@ class LRUCache {
         if (this.#ttls && this.#starts) {
             this.#ttls.fill(0);
             this.#starts.fill(0);
+            for (const t of this.#autopurgeTimers ?? []) {
+                if (t !== undefined)
+                    clearTimeout(t);
+            }
+            this.#autopurgeTimers?.fill(undefined);
         }
         if (this.#sizes) {
             this.#sizes.fill(0);
@@ -1589,10 +1606,10 @@ class LRUCache {
 }
 //# sourceMappingURL=index.js.map
 
-/***/ }),
+/***/ },
 
-/***/ 588:
-/***/ (() => {
+/***/ 588
+() {
 
 /*globals jQuery,Window,HTMLElement,HTMLDocument,HTMLCollection,NodeList,MutationObserver */
 /*exported Arrive*/
@@ -2104,10 +2121,10 @@ var Arrive = (function(window, $, undefined) {
 
 
 
-/***/ }),
+/***/ },
 
-/***/ 954:
-/***/ ((module, __webpack_exports__, __webpack_require__) => {
+/***/ 954
+(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
@@ -2348,10 +2365,10 @@ if (GM?.info !== undefined) {
 __webpack_async_result__();
 } catch(e) { __webpack_async_result__(e); } }, 1);
 
-/***/ }),
+/***/ },
 
-/***/ 987:
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+/***/ 987
+(__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
@@ -2493,7 +2510,7 @@ var api = init(defaultConverter, { path: '/' });
 
 
 
-/***/ })
+/***/ }
 
 /******/ 	});
 /************************************************************************/
