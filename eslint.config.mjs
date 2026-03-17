@@ -9,10 +9,10 @@ export default [{
             ...globals.browser,
             ...globals.greasemonkey,
             Atomics: "readonly",
-            SharedArrayBuffer: "readonly",
+            SharedArrayBuffer: "readonly"
         },
         ecmaVersion: "latest",
-        sourceType: "module",
+        sourceType: "module"
     },
 
     rules: {
@@ -32,6 +32,6 @@ export default [{
         "space-in-parens": ["error", "never"],
         "space-infix-ops": "error",
         "space-unary-ops": ["error", { words: true, nonwords: false }],
-        semi: [2, "always"],
-    },
+        semi: [2, "always"]
+    }
 }];
