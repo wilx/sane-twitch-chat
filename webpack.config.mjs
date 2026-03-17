@@ -1,13 +1,15 @@
-const path = require('path');
-const us = require('webpack-userscript');
+import { join, resolve as pathResolve } from 'path';
+import { UserscriptPlugin } from 'webpack-userscript';
 
-module.exports = {
+const __dirname = import.meta.dirname;
+
+export default {
     mode: 'production',
     entry: {
-        'sane-twitch-chat': path.join(__dirname, 'src', 'index.js')
+        'sane-twitch-chat': join(__dirname, 'src', 'index.js')
     },
     output: {
-        path: path.resolve(__dirname, 'output'),
+        path: pathResolve(__dirname, 'output'),
         filename: 'index.js'
     },
     module: {
@@ -55,8 +57,8 @@ module.exports = {
         usedExports: true
     },
     plugins: [
-        new us.UserscriptPlugin({
-            headers (original) {
+        new UserscriptPlugin({
+            headers(original) {
                 return {
                     ...original,
                     name: '[name]',
@@ -76,7 +78,7 @@ module.exports = {
     ],
     resolve: {
         alias: {
-            node_modules: path.join(__dirname, 'node_modules')
+            node_modules: join(__dirname, 'node_modules')
         }
     }
 };
