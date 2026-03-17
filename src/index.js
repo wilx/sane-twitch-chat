@@ -1,4 +1,4 @@
-import { LRUCache } from 'lru-cache';
+import { LRUCache } from 'lru-cache/raw';
 import 'arrive';
 import Cookies from 'js-cookie';
 
@@ -103,7 +103,7 @@ class SaneTwitchChat {
         }
 
         // Filter repeated messages.
-        if (combinedMessage === this.prevMessage) {
+        if (combinedMessage === this.#prevMessage) {
             console.log(`Hiding repeated message: ${combinedMessage}`);
             this.#hideNode(msgNode);
             return;
