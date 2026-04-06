@@ -2,7 +2,7 @@ import globals from "globals";
 import js from "@eslint/js";
 
 export default [{
-    ignores: ["output/*.js"],
+    ignores: ["output/*.js"]
 }, js.configs.recommended, {
     languageOptions: {
         globals: {

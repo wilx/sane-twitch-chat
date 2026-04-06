@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.583
+// @version     1.0.594
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -20,13 +20,13 @@
 /***/ 588
 () {
 
-/*globals jQuery,Window,HTMLElement,HTMLDocument,HTMLCollection,NodeList,MutationObserver */
+/*globals jQuery,Window,HTMLElement,HTMLDocument,HTMLCollection,NodeList,MutationObserver,SVGElement */
 /*exported Arrive*/
 /*jshint latedef:false */
 
 /*
  * arrive.js
- * v2.5.2
+ * v2.5.3
  * https://github.com/uzairfarooq/arrive
  * MIT licensed
  *
@@ -43,12 +43,12 @@ var Arrive = (function(window, $, undefined) {
   var arriveUniqueId = 0;
 
   var utils = (function() {
-    var matches = HTMLElement.prototype.matches || HTMLElement.prototype.webkitMatchesSelector || HTMLElement.prototype.mozMatchesSelector
+    var matches = Element.prototype.matches || HTMLElement.prototype.webkitMatchesSelector || HTMLElement.prototype.mozMatchesSelector
                   || HTMLElement.prototype.msMatchesSelector;
 
     return {
       matchesSelector: function(elem, selector) {
-        return elem instanceof HTMLElement && matches.call(elem, selector);
+        return elem instanceof Element && matches.call(elem, selector);
       },
       // to enable function overloading - By John Resig (MIT Licensed)
       addMethod: function (object, name, fn) {
@@ -514,6 +514,7 @@ var Arrive = (function(window, $, undefined) {
     exposeApi($.fn);
   }
   exposeApi(HTMLElement.prototype);
+  exposeApi(SVGElement.prototype);
   exposeApi(NodeList.prototype);
   exposeApi(HTMLCollection.prototype);
   exposeApi(HTMLDocument.prototype);
@@ -542,6 +543,9 @@ __webpack_require__.a(module, async (__webpack_handle_async_dependencies__, __we
 /* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(588);
 /* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(arrive__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var js_cookie__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(987);
+var __webpack_async_dependencies__ = __webpack_handle_async_dependencies__([lru_cache_raw__WEBPACK_IMPORTED_MODULE_0__]);
+var __webpack_async_dependencies_result__ = (__webpack_async_dependencies__.then ? (await __webpack_async_dependencies__)() : __webpack_async_dependencies__);
+lru_cache_raw__WEBPACK_IMPORTED_MODULE_0__ = __webpack_async_dependencies_result__[0];
 
 
 
@@ -921,16 +925,54 @@ var api = init(defaultConverter, { path: '/' });
 
 /***/ },
 
-/***/ 303
-(__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
+/***/ 897
+(__webpack_module__, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+__webpack_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   q: () => (/* binding */ metrics),
+/* harmony export */   z: () => (/* binding */ tracing)
+/* harmony export */ });
+/**
+ * no-op polyfills for non-node environments. tries to load the actual
+ * diagnostics_channel module on platforms (bun, deno) that support it, but
+ * fails gracefully if not found. This means that the first tick of metrics
+ * and tracing will be missed, but that probably doesn't matter much.
+ */
+// conditionally import from diagnostic_channel, fall back to dummyfill
+// all we actually have to mock is the hasSubscribers, since we alwasy check
+/* v8 ignore next */
+const dummy = { hasSubscribers: false };
+const [metrics, tracing] = await __webpack_require__.e(/* import() */ 433).then(__webpack_require__.bind(__webpack_require__, 433))
+    .then(dc => [
+    dc.channel('lru-cache:metrics'),
+    dc.tracingChannel('lru-cache'),
+])
+    .catch(() => [dummy, dummy]);
+//# sourceMappingURL=diagnostics-channel-esm.mjs.map
+__webpack_async_result__();
+} catch(e) { __webpack_async_result__(e); } }, 1);
+
+/***/ },
+
+/***/ 303
+(__webpack_module__, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   q: () => (/* binding */ LRUCache)
 /* harmony export */ });
+/* harmony import */ var _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(897);
+var __webpack_async_dependencies__ = __webpack_handle_async_dependencies__([_diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__]);
+var __webpack_async_dependencies_result__ = (__webpack_async_dependencies__.then ? (await __webpack_async_dependencies__)() : __webpack_async_dependencies__);
+_diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_async_dependencies_result__[0];
 /**
  * @module LRUCache
  */
+
+const hasSubscribers = () => _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers || _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .tracing */ .z.hasSubscribers;
 const defaultPerf = (typeof performance === 'object' &&
     performance &&
     typeof performance.now === 'function') ?
@@ -941,65 +983,19 @@ const warned = new Set();
 const PROCESS = (typeof process === 'object' && !!process ?
     process
     : {});
-/* c8 ignore start */
-const emitWarning = (msg, type, code, fn) => {
-    typeof PROCESS.emitWarning === 'function' ?
-        PROCESS.emitWarning(msg, type, code, fn)
-        : console.error(`[${code}] ${type}: ${msg}`);
-};
-let AC = globalThis.AbortController;
-let AS = globalThis.AbortSignal;
-/* c8 ignore start */
-if (typeof AC === 'undefined') {
-    //@ts-ignore
-    AS = class AbortSignal {
-        onabort;
-        _onabort = [];
-        reason;
-        aborted = false;
-        addEventListener(_, fn) {
-            this._onabort.push(fn);
-        }
-    };
-    //@ts-ignore
-    AC = class AbortController {
-        constructor() {
-            warnACPolyfill();
-        }
-        signal = new AS();
-        abort(reason) {
-            if (this.signal.aborted)
-                return;
-            //@ts-ignore
-            this.signal.reason = reason;
-            //@ts-ignore
-            this.signal.aborted = true;
-            //@ts-ignore
-            for (const fn of this.signal._onabort) {
-                fn(reason);
-            }
-            this.signal.onabort?.(reason);
-        }
-    };
-    let printACPolyfillWarning = PROCESS.env?.LRU_CACHE_IGNORE_AC_WARNING !== '1';
-    const warnACPolyfill = () => {
-        if (!printACPolyfillWarning)
-            return;
-        printACPolyfillWarning = false;
-        emitWarning('AbortController is not defined. If using lru-cache in ' +
-            'node 14, load an AbortController polyfill from the ' +
-            '`node-abort-controller` package. A minimal polyfill is ' +
-            'provided for use by LRUCache.fetch(), but it should not be ' +
-            'relied upon in other contexts (eg, passing it to other APIs that ' +
-            'use AbortController/AbortSignal might have undesirable effects). ' +
-            'You may disable this with LRU_CACHE_IGNORE_AC_WARNING=1 in the env.', 'NO_ABORT_CONTROLLER', 'ENOTSUP', warnACPolyfill);
-    };
-}
 /* c8 ignore stop */
+const emitWarning = (msg, type, code, fn) => {
+    if (typeof PROCESS.emitWarning === 'function') {
+        PROCESS.emitWarning(msg, type, code, fn);
+    }
+    else {
+        //oxlint-disable-next-line no-console
+        console.error(`[${code}] ${type}: ${msg}`);
+    }
+};
 const shouldWarn = (code) => !warned.has(code);
 const TYPE = Symbol('type');
-const isPosInt = (n) => n && n === Math.floor(n) && n > 0 && isFinite(n);
-/* c8 ignore start */
+const isPosInt = (n) => !!n && n === Math.floor(n) && n > 0 && isFinite(n);
 // This is a little bit ridiculous, tbh.
 // The maximum array length is 2^32-1 or thereabouts on most JS impls.
 // And well before that point, you're caching the entire world, I mean,
@@ -1008,6 +1004,7 @@ const isPosInt = (n) => n && n === Math.floor(n) && n > 0 && isFinite(n);
 // zeroes at init time is brutal when you get that big.
 // But why not be complete?
 // Maybe in the future, these limits will have expanded.
+/* c8 ignore start */
 const getUintArray = (max) => !isPosInt(max) ? null
     : max <= Math.pow(2, 8) ? Uint8Array
         : max <= Math.pow(2, 16) ? Uint16Array
@@ -1288,8 +1285,8 @@ class LRUCache {
         this.#fetchMethod = fetchMethod;
         this.#hasFetchMethod = !!fetchMethod;
         this.#keyMap = new Map();
-        this.#keyList = new Array(max).fill(undefined);
-        this.#valList = new Array(max).fill(undefined);
+        this.#keyList = Array.from({ length: max }).fill(undefined);
+        this.#valList = Array.from({ length: max }).fill(undefined);
         this.#next = new UintArray(max);
         this.#prev = new UintArray(max);
         this.#head = 0;
@@ -1373,7 +1370,9 @@ class LRUCache {
         this.#ttls = ttls;
         this.#starts = starts;
         const purgeTimers = this.ttlAutopurge ?
-            new Array(this.#max)
+            Array.from({
+                length: this.#max,
+            })
             : undefined;
         this.#autopurgeTimers = purgeTimers;
         this.#setItemTTL = (index, ttl, start = this.#perf.now()) => {
@@ -1415,9 +1414,11 @@ class LRUCache {
             if (ttls[index]) {
                 const ttl = ttls[index];
                 const start = starts[index];
-                /* c8 ignore next */
-                if (!ttl || !start)
+                /* c8 ignore start */
+                if (!ttl || !start) {
                     return;
+                }
+                /* c8 ignore stop */
                 status.ttl = ttl;
                 status.start = start;
                 status.now = cachedNow || getNow();
@@ -1524,10 +1525,7 @@ class LRUCache {
     };
     *#indexes({ allowStale = this.allowStale } = {}) {
         if (this.#size) {
-            for (let i = this.#tail; true;) {
-                if (!this.#isValidIndex(i)) {
-                    break;
-                }
+            for (let i = this.#tail; this.#isValidIndex(i);) {
                 if (allowStale || !this.#isStale(i)) {
                     yield i;
                 }
@@ -1542,10 +1540,7 @@ class LRUCache {
     }
     *#rindexes({ allowStale = this.allowStale } = {}) {
         if (this.#size) {
-            for (let i = this.#head; true;) {
-                if (!this.#isValidIndex(i)) {
-                    break;
-                }
+            for (let i = this.#head; this.#isValidIndex(i);) {
                 if (allowStale || !this.#isStale(i)) {
                     yield i;
                 }
@@ -1666,7 +1661,7 @@ class LRUCache {
             if (value === undefined)
                 continue;
             if (fn(value, this.#keyList[i], this)) {
-                return this.get(this.#keyList[i], getOptions);
+                return this.#get(this.#keyList[i], getOptions);
             }
         }
     }
@@ -1739,7 +1734,7 @@ class LRUCache {
         const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
         if (value === undefined)
             return undefined;
-        /* c8 ignore end */
+        /* c8 ignore stop */
         const entry = { value };
         if (this.#ttls && this.#starts) {
             const ttl = this.#ttls[i];
@@ -1813,7 +1808,7 @@ class LRUCache {
                 const age = Date.now() - entry.start;
                 entry.start = this.#perf.now() - age;
             }
-            this.set(key, entry.value, entry);
+            this.#set(key, entry.value, entry);
         }
     }
     /**
@@ -1847,22 +1842,41 @@ class LRUCache {
      * `cache.delete(key)`. `undefined` is never stored in the cache.
      */
     set(k, v, setOptions = {}) {
+        const { status = _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers ? {} : undefined } = setOptions;
+        setOptions.status = status;
+        if (status) {
+            status.op = 'set';
+            status.key = k;
+            if (v !== undefined)
+                status.value = v;
+        }
+        const result = this.#set(k, v, setOptions);
+        if (status && _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers) {
+            _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.publish(status);
+        }
+        return result;
+    }
+    #set(k, v, setOptions = {}) {
+        const { ttl = this.ttl, start, noDisposeOnSet = this.noDisposeOnSet, sizeCalculation = this.sizeCalculation, status, } = setOptions;
         if (v === undefined) {
+            if (status)
+                status.set = 'deleted';
             this.delete(k);
             return this;
         }
-        const { ttl = this.ttl, start, noDisposeOnSet = this.noDisposeOnSet, sizeCalculation = this.sizeCalculation, status, } = setOptions;
         let { noUpdateTTL = this.noUpdateTTL } = setOptions;
-        const size = this.#requireSize(k, v, setOptions.size || 0, sizeCalculation);
+        if (status && !this.#isBackgroundFetch(v))
+            status.value = v;
+        const size = this.#requireSize(k, v, setOptions.size || 0, sizeCalculation, status);
         // if the item doesn't fit, don't do anything
         // NB: maxEntrySize set to maxSize by default
         if (this.maxEntrySize && size > this.maxEntrySize) {
+            // have to delete, in case something is there already.
+            this.#delete(k, 'set');
             if (status) {
                 status.set = 'miss';
                 status.maxEntrySizeExceeded = true;
             }
-            // have to delete, in case something is there already.
-            this.#delete(k, 'set');
             return this;
         }
         let index = this.#size === 0 ? undefined : this.#keyMap.get(k);
@@ -2033,6 +2047,18 @@ class LRUCache {
      * {@link LRUCache.OptionsBase.updateAgeOnHas} is set.
      */
     has(k, hasOptions = {}) {
+        const { status = _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers ? {} : undefined } = hasOptions;
+        hasOptions.status = status;
+        if (status) {
+            status.op = 'has';
+            status.key = k;
+        }
+        const result = this.#has(k, hasOptions);
+        if (_diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers)
+            _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.publish(status);
+        return result;
+    }
+    #has(k, hasOptions = {}) {
         const { updateAgeOnHas = this.updateAgeOnHas, status } = hasOptions;
         const index = this.#keyMap.get(k);
         if (index !== undefined) {
@@ -2069,21 +2095,45 @@ class LRUCache {
      * {@link LRUCache.OptionsBase.allowStale} is set.
      */
     peek(k, peekOptions = {}) {
-        const { allowStale = this.allowStale } = peekOptions;
+        const { status = hasSubscribers() ? {} : undefined } = peekOptions;
+        if (status) {
+            status.op = 'peek';
+            status.key = k;
+        }
+        peekOptions.status = status;
+        const result = this.#peek(k, peekOptions);
+        if (_diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers) {
+            _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.publish(status);
+        }
+        return result;
+    }
+    #peek(k, peekOptions) {
+        const { status, allowStale = this.allowStale } = peekOptions;
         const index = this.#keyMap.get(k);
         if (index === undefined || (!allowStale && this.#isStale(index))) {
-            return;
+            if (status)
+                status.peek = index === undefined ? 'miss' : 'stale';
+            return undefined;
         }
         const v = this.#valList[index];
-        // either stale and allowed, or forcing a refresh of non-stale value
-        return this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
+        const val = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
+        if (status) {
+            if (val !== undefined) {
+                status.peek = 'hit';
+                status.value = val;
+            }
+            else {
+                status.peek = 'miss';
+            }
+        }
+        return val;
     }
     #backgroundFetch(k, index, options, context) {
         const v = index === undefined ? undefined : this.#valList[index];
         if (this.#isBackgroundFetch(v)) {
             return v;
         }
-        const ac = new AC();
+        const ac = new AbortController();
         const { signal } = options;
         // when/if our AC signals, then stop listening to theirs.
         signal?.addEventListener('abort', () => ac.abort(signal.reason), {
@@ -2119,7 +2169,7 @@ class LRUCache {
             // cache and ignore the abort, or if it's still pending on this specific
             // background request, then write it to the cache.
             const vl = this.#valList[index];
-            if (vl === p || (ignoreAbort && updateCache && vl === undefined)) {
+            if (vl === p || (vl === undefined && ignoreAbort && updateCache)) {
                 if (v === undefined) {
                     if (bf.__staleWhileFetching !== undefined) {
                         this.#valList[index] = bf.__staleWhileFetching;
@@ -2131,7 +2181,7 @@ class LRUCache {
                 else {
                     if (options.status)
                         options.status.fetchUpdated = true;
-                    this.set(k, v, fetchOpts.options);
+                    this.#set(k, v, fetchOpts.options);
                 }
             }
             return v;
@@ -2203,7 +2253,7 @@ class LRUCache {
         });
         if (index === undefined) {
             // internal, don't expose status.
-            this.set(k, bf, { ...fetchOpts.options, status: undefined });
+            this.#set(k, bf, { ...fetchOpts.options, status: undefined });
             index = this.#keyMap.get(k);
         }
         else {
@@ -2218,9 +2268,25 @@ class LRUCache {
         return (!!b &&
             b instanceof Promise &&
             b.hasOwnProperty('__staleWhileFetching') &&
-            b.__abortController instanceof AC);
+            b.__abortController instanceof AbortController);
     }
-    async fetch(k, fetchOptions = {}) {
+    fetch(k, fetchOptions = {}) {
+        const ths = _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .tracing */ .z.hasSubscribers;
+        const { status = hasSubscribers() ? {} : undefined } = fetchOptions;
+        fetchOptions.status = status;
+        if (status && fetchOptions.context) {
+            status.context = fetchOptions.context;
+        }
+        const p = this.#fetch(k, fetchOptions);
+        if (status && hasSubscribers()) {
+            if (ths) {
+                status.trace = true;
+                _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .tracing */ .z.tracePromise(() => p, status).catch(() => { });
+            }
+        }
+        return p;
+    }
+    async #fetch(k, fetchOptions = {}) {
         const { 
         // get options
         allowStale = this.allowStale, updateAgeOnGet = this.updateAgeOnGet, noDeleteOnStaleGet = this.noDeleteOnStaleGet, 
@@ -2228,10 +2294,16 @@ class LRUCache {
         ttl = this.ttl, noDisposeOnSet = this.noDisposeOnSet, size = 0, sizeCalculation = this.sizeCalculation, noUpdateTTL = this.noUpdateTTL, 
         // fetch exclusive options
         noDeleteOnFetchRejection = this.noDeleteOnFetchRejection, allowStaleOnFetchRejection = this.allowStaleOnFetchRejection, ignoreFetchAbort = this.ignoreFetchAbort, allowStaleOnFetchAbort = this.allowStaleOnFetchAbort, context, forceRefresh = false, status, signal, } = fetchOptions;
+        if (status) {
+            status.op = 'fetch';
+            status.key = k;
+            if (forceRefresh)
+                status.forceRefresh = true;
+        }
         if (!this.#hasFetchMethod) {
             if (status)
                 status.fetch = 'get';
-            return this.get(k, {
+            return this.#get(k, {
                 allowStale,
                 updateAgeOnGet,
                 noDeleteOnStaleGet,
@@ -2300,26 +2372,69 @@ class LRUCache {
             return staleVal ? p.__staleWhileFetching : (p.__returned = p);
         }
     }
-    async forceFetch(k, fetchOptions = {}) {
-        const v = await this.fetch(k, fetchOptions);
+    forceFetch(k, fetchOptions = {}) {
+        const ths = _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .tracing */ .z.hasSubscribers;
+        const { status = hasSubscribers() ? {} : undefined } = fetchOptions;
+        fetchOptions.status = status;
+        if (status && fetchOptions.context) {
+            status.context = fetchOptions.context;
+        }
+        const p = this.#forceFetch(k, fetchOptions);
+        if (status && hasSubscribers()) {
+            if (ths) {
+                status.trace = true;
+                _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .tracing */ .z.tracePromise(() => p, status).catch(() => { });
+            }
+        }
+        return p;
+    }
+    async #forceFetch(k, fetchOptions = {}) {
+        const v = await this.#fetch(k, fetchOptions);
         if (v === undefined)
             throw new Error('fetch() returned undefined');
         return v;
     }
     memo(k, memoOptions = {}) {
+        const { status = _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers ? {} : undefined } = memoOptions;
+        memoOptions.status = status;
+        if (status) {
+            status.op = 'memo';
+            status.key = k;
+            if (memoOptions.context) {
+                status.context = memoOptions.context;
+            }
+        }
+        const result = this.#memo(k, memoOptions);
+        if (status)
+            status.value = result;
+        if (_diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers)
+            _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.publish(status);
+        return result;
+    }
+    #memo(k, memoOptions = {}) {
         const memoMethod = this.#memoMethod;
         if (!memoMethod) {
             throw new Error('no memoMethod provided to constructor');
         }
-        const { context, forceRefresh, ...options } = memoOptions;
-        const v = this.get(k, options);
-        if (!forceRefresh && v !== undefined)
+        const { context, status, forceRefresh, ...options } = memoOptions;
+        if (status && forceRefresh)
+            status.forceRefresh = true;
+        const v = this.#get(k, options);
+        const refresh = forceRefresh || v === undefined;
+        if (status) {
+            status.memo = refresh ? 'miss' : 'hit';
+            if (!refresh)
+                status.value = v;
+        }
+        if (!refresh)
             return v;
         const vv = memoMethod(k, v, {
             options,
             context,
         });
-        this.set(k, vv, options);
+        if (status)
+            status.value = vv;
+        this.#set(k, vv, options);
         return vv;
     }
     /**
@@ -2329,6 +2444,22 @@ class LRUCache {
      * If the key is not found, get() will return `undefined`.
      */
     get(k, getOptions = {}) {
+        const { status = _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers ? {} : undefined } = getOptions;
+        getOptions.status = status;
+        if (status) {
+            status.op = 'get';
+            status.key = k;
+        }
+        const result = this.#get(k, getOptions);
+        if (status) {
+            if (result !== undefined)
+                status.value = result;
+            if (_diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers)
+                _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.publish(status);
+        }
+        return result;
+    }
+    #get(k, getOptions = {}) {
         const { allowStale = this.allowStale, updateAgeOnGet = this.updateAgeOnGet, noDeleteOnStaleGet = this.noDeleteOnStaleGet, status, } = getOptions;
         const index = this.#keyMap.get(k);
         if (index !== undefined) {
@@ -2412,6 +2543,13 @@ class LRUCache {
         return this.#delete(k, 'delete');
     }
     #delete(k, reason) {
+        if (_diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers) {
+            _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.publish({
+                op: 'delete',
+                delete: reason,
+                key: k,
+            });
+        }
         let deleted = false;
         if (this.#size !== 0) {
             const index = this.#keyMap.get(k);
@@ -2519,6 +2657,8 @@ class LRUCache {
     }
 }
 //# sourceMappingURL=index.js.map
+__webpack_async_result__();
+} catch(e) { __webpack_async_result__(e); } });
 
 /***/ }
 
@@ -2547,6 +2687,9 @@ class LRUCache {
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
+/******/ 	
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = __webpack_modules__;
 /******/ 	
 /************************************************************************/
 /******/ 	/* webpack/runtime/async module */
@@ -2649,9 +2792,189 @@ class LRUCache {
 /******/ 		};
 /******/ 	})();
 /******/ 	
+/******/ 	/* webpack/runtime/ensure chunk */
+/******/ 	(() => {
+/******/ 		__webpack_require__.f = {};
+/******/ 		// This file contains only the entry chunk.
+/******/ 		// The chunk loading function for additional chunks
+/******/ 		__webpack_require__.e = (chunkId) => {
+/******/ 			return Promise.all(Object.keys(__webpack_require__.f).reduce((promises, key) => {
+/******/ 				__webpack_require__.f[key](chunkId, promises);
+/******/ 				return promises;
+/******/ 			}, []));
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/get javascript chunk filename */
+/******/ 	(() => {
+/******/ 		// This function allow to reference async chunks
+/******/ 		__webpack_require__.u = (chunkId) => {
+/******/ 			// return url for filenames based on template
+/******/ 			return "" + chunkId + ".index.js";
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
 /******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/load script */
+/******/ 	(() => {
+/******/ 		var inProgress = {};
+/******/ 		var dataWebpackPrefix = "sane-twitch-chat:";
+/******/ 		// loadScript function to load a script via script tag
+/******/ 		__webpack_require__.l = (url, done, key, chunkId) => {
+/******/ 			if(inProgress[url]) { inProgress[url].push(done); return; }
+/******/ 			var script, needAttach;
+/******/ 			if(key !== undefined) {
+/******/ 				var scripts = document.getElementsByTagName("script");
+/******/ 				for(var i = 0; i < scripts.length; i++) {
+/******/ 					var s = scripts[i];
+/******/ 					if(s.getAttribute("src") == url || s.getAttribute("data-webpack") == dataWebpackPrefix + key) { script = s; break; }
+/******/ 				}
+/******/ 			}
+/******/ 			if(!script) {
+/******/ 				needAttach = true;
+/******/ 				script = document.createElement('script');
+/******/ 		
+/******/ 				script.charset = 'utf-8';
+/******/ 				if (__webpack_require__.nc) {
+/******/ 					script.setAttribute("nonce", __webpack_require__.nc);
+/******/ 				}
+/******/ 				script.setAttribute("data-webpack", dataWebpackPrefix + key);
+/******/ 		
+/******/ 				script.src = url;
+/******/ 			}
+/******/ 			inProgress[url] = [done];
+/******/ 			var onScriptComplete = (prev, event) => {
+/******/ 				// avoid mem leaks in IE.
+/******/ 				script.onerror = script.onload = null;
+/******/ 				clearTimeout(timeout);
+/******/ 				var doneFns = inProgress[url];
+/******/ 				delete inProgress[url];
+/******/ 				script.parentNode && script.parentNode.removeChild(script);
+/******/ 				doneFns && doneFns.forEach((fn) => (fn(event)));
+/******/ 				if(prev) return prev(event);
+/******/ 			}
+/******/ 			var timeout = setTimeout(onScriptComplete.bind(null, undefined, { type: 'timeout', target: script }), 120000);
+/******/ 			script.onerror = onScriptComplete.bind(null, script.onerror);
+/******/ 			script.onload = onScriptComplete.bind(null, script.onload);
+/******/ 			needAttach && document.head.appendChild(script);
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/publicPath */
+/******/ 	(() => {
+/******/ 		var scriptUrl;
+/******/ 		if (globalThis.importScripts) scriptUrl = globalThis.location + "";
+/******/ 		var document = globalThis.document;
+/******/ 		if (!scriptUrl && document) {
+/******/ 			if (document.currentScript && document.currentScript.tagName.toUpperCase() === 'SCRIPT')
+/******/ 				scriptUrl = document.currentScript.src;
+/******/ 			if (!scriptUrl) {
+/******/ 				var scripts = document.getElementsByTagName("script");
+/******/ 				if(scripts.length) {
+/******/ 					var i = scripts.length - 1;
+/******/ 					while (i > -1 && (!scriptUrl || !/^http(s?):/.test(scriptUrl))) scriptUrl = scripts[i--].src;
+/******/ 				}
+/******/ 			}
+/******/ 		}
+/******/ 		// When supporting browsers where an automatic publicPath is not supported you must specify an output.publicPath manually via configuration
+/******/ 		// or pass an empty string ("") and set the __webpack_public_path__ variable from your code to use your own logic.
+/******/ 		if (!scriptUrl) throw new Error("Automatic publicPath is not supported in this browser");
+/******/ 		scriptUrl = scriptUrl.replace(/^blob:/, "").replace(/#.*$/, "").replace(/\?.*$/, "").replace(/\/[^\/]+$/, "/");
+/******/ 		__webpack_require__.p = scriptUrl;
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/jsonp chunk loading */
+/******/ 	(() => {
+/******/ 		// no baseURI
+/******/ 		
+/******/ 		// object to store loaded and loading chunks
+/******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
+/******/ 		// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
+/******/ 		var installedChunks = {
+/******/ 			335: 0
+/******/ 		};
+/******/ 		
+/******/ 		__webpack_require__.f.j = (chunkId, promises) => {
+/******/ 				// JSONP chunk loading for javascript
+/******/ 				var installedChunkData = __webpack_require__.o(installedChunks, chunkId) ? installedChunks[chunkId] : undefined;
+/******/ 				if(installedChunkData !== 0) { // 0 means "already installed".
+/******/ 		
+/******/ 					// a Promise means "currently loading".
+/******/ 					if(installedChunkData) {
+/******/ 						promises.push(installedChunkData[2]);
+/******/ 					} else {
+/******/ 						if(true) { // all chunks have JS
+/******/ 							// setup Promise in chunk cache
+/******/ 							var promise = new Promise((resolve, reject) => (installedChunkData = installedChunks[chunkId] = [resolve, reject]));
+/******/ 							promises.push(installedChunkData[2] = promise);
+/******/ 		
+/******/ 							// start chunk loading
+/******/ 							var url = __webpack_require__.p + __webpack_require__.u(chunkId);
+/******/ 							// create error before stack unwound to get useful stacktrace later
+/******/ 							var error = new Error();
+/******/ 							var loadingEnded = (event) => {
+/******/ 								if(__webpack_require__.o(installedChunks, chunkId)) {
+/******/ 									installedChunkData = installedChunks[chunkId];
+/******/ 									if(installedChunkData !== 0) installedChunks[chunkId] = undefined;
+/******/ 									if(installedChunkData) {
+/******/ 										var errorType = event && (event.type === 'load' ? 'missing' : event.type);
+/******/ 										var realSrc = event && event.target && event.target.src;
+/******/ 										error.message = 'Loading chunk ' + chunkId + ' failed.\n(' + errorType + ': ' + realSrc + ')';
+/******/ 										error.name = 'ChunkLoadError';
+/******/ 										error.type = errorType;
+/******/ 										error.request = realSrc;
+/******/ 										installedChunkData[1](error);
+/******/ 									}
+/******/ 								}
+/******/ 							};
+/******/ 							__webpack_require__.l(url, loadingEnded, "chunk-" + chunkId, chunkId);
+/******/ 						}
+/******/ 					}
+/******/ 				}
+/******/ 		};
+/******/ 		
+/******/ 		// no prefetching
+/******/ 		
+/******/ 		// no preloaded
+/******/ 		
+/******/ 		// no HMR
+/******/ 		
+/******/ 		// no HMR manifest
+/******/ 		
+/******/ 		// no on chunks loaded
+/******/ 		
+/******/ 		// install a JSONP callback for chunk loading
+/******/ 		var webpackJsonpCallback = (parentChunkLoadingFunction, data) => {
+/******/ 			var [chunkIds, moreModules, runtime] = data;
+/******/ 			// add "moreModules" to the modules object,
+/******/ 			// then flag all "chunkIds" as loaded and fire callback
+/******/ 			var moduleId, chunkId, i = 0;
+/******/ 			if(chunkIds.some((id) => (installedChunks[id] !== 0))) {
+/******/ 				for(moduleId in moreModules) {
+/******/ 					if(__webpack_require__.o(moreModules, moduleId)) {
+/******/ 						__webpack_require__.m[moduleId] = moreModules[moduleId];
+/******/ 					}
+/******/ 				}
+/******/ 				if(runtime) var result = runtime(__webpack_require__);
+/******/ 			}
+/******/ 			if(parentChunkLoadingFunction) parentChunkLoadingFunction(data);
+/******/ 			for(;i < chunkIds.length; i++) {
+/******/ 				chunkId = chunkIds[i];
+/******/ 				if(__webpack_require__.o(installedChunks, chunkId) && installedChunks[chunkId]) {
+/******/ 					installedChunks[chunkId][0]();
+/******/ 				}
+/******/ 				installedChunks[chunkId] = 0;
+/******/ 			}
+/******/ 		
+/******/ 		}
+/******/ 		
+/******/ 		var chunkLoadingGlobal = globalThis["webpackChunksane_twitch_chat"] = globalThis["webpackChunksane_twitch_chat"] || [];
+/******/ 		chunkLoadingGlobal.forEach(webpackJsonpCallback.bind(null, 0));
+/******/ 		chunkLoadingGlobal.push = webpackJsonpCallback.bind(null, chunkLoadingGlobal.push.bind(chunkLoadingGlobal));
 /******/ 	})();
 /******/ 	
 /************************************************************************/
