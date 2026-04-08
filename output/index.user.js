@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.594
+// @version     1.0.595
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -539,13 +539,10 @@ var Arrive = (function(window, $, undefined) {
 "use strict";
 __webpack_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 /* unused harmony exports start, SaneTwitchChat */
-/* harmony import */ var lru_cache_raw__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(303);
+/* harmony import */ var lru_cache_raw__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(519);
 /* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(588);
 /* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(arrive__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var js_cookie__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(987);
-var __webpack_async_dependencies__ = __webpack_handle_async_dependencies__([lru_cache_raw__WEBPACK_IMPORTED_MODULE_0__]);
-var __webpack_async_dependencies_result__ = (__webpack_async_dependencies__.then ? (await __webpack_async_dependencies__)() : __webpack_async_dependencies__);
-lru_cache_raw__WEBPACK_IMPORTED_MODULE_0__ = __webpack_async_dependencies_result__[0];
 
 
 
@@ -925,54 +922,42 @@ var api = init(defaultConverter, { path: '/' });
 
 /***/ },
 
-/***/ 897
-(__webpack_module__, __webpack_exports__, __webpack_require__) {
+/***/ 519
+(__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-__webpack_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   q: () => (/* binding */ metrics),
-/* harmony export */   z: () => (/* binding */ tracing)
-/* harmony export */ });
+
+// EXPORTS
+__webpack_require__.d(__webpack_exports__, {
+  q: () => (/* binding */ LRUCache)
+});
+
+;// ./node_modules/lru-cache/dist/esm/diagnostics-channel.js
 /**
  * no-op polyfills for non-node environments. tries to load the actual
- * diagnostics_channel module on platforms (bun, deno) that support it, but
- * fails gracefully if not found. This means that the first tick of metrics
+ * diagnostics_channel module on platforms that support it, but fails
+ * gracefully if not found. This means that the first tick of metrics
  * and tracing will be missed, but that probably doesn't matter much.
  */
 // conditionally import from diagnostic_channel, fall back to dummyfill
 // all we actually have to mock is the hasSubscribers, since we alwasy check
 /* v8 ignore next */
 const dummy = { hasSubscribers: false };
-const [metrics, tracing] = await __webpack_require__.e(/* import() */ 433).then(__webpack_require__.bind(__webpack_require__, 433))
-    .then(dc => [
-    dc.channel('lru-cache:metrics'),
-    dc.tracingChannel('lru-cache'),
-])
-    .catch(() => [dummy, dummy]);
+let metrics = dummy;
+let tracing = dummy;
+__webpack_require__.e(/* import() */ 433).then(__webpack_require__.bind(__webpack_require__, 433))
+    .then(dc => {
+    metrics = dc.channel('lru-cache:metrics');
+    tracing = dc.tracingChannel('lru-cache');
+})
+    .catch(() => { });
 //# sourceMappingURL=diagnostics-channel-esm.mjs.map
-__webpack_async_result__();
-} catch(e) { __webpack_async_result__(e); } }, 1);
-
-/***/ },
-
-/***/ 303
-(__webpack_module__, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   q: () => (/* binding */ LRUCache)
-/* harmony export */ });
-/* harmony import */ var _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(897);
-var __webpack_async_dependencies__ = __webpack_handle_async_dependencies__([_diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__]);
-var __webpack_async_dependencies_result__ = (__webpack_async_dependencies__.then ? (await __webpack_async_dependencies__)() : __webpack_async_dependencies__);
-_diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_async_dependencies_result__[0];
+;// ./node_modules/lru-cache/dist/esm/index.js
 /**
  * @module LRUCache
  */
 
-const hasSubscribers = () => _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers || _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .tracing */ .z.hasSubscribers;
+const hasSubscribers = () => metrics.hasSubscribers || tracing.hasSubscribers;
 const defaultPerf = (typeof performance === 'object' &&
     performance &&
     typeof performance.now === 'function') ?
@@ -1842,7 +1827,7 @@ class LRUCache {
      * `cache.delete(key)`. `undefined` is never stored in the cache.
      */
     set(k, v, setOptions = {}) {
-        const { status = _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers ? {} : undefined } = setOptions;
+        const { status = metrics.hasSubscribers ? {} : undefined } = setOptions;
         setOptions.status = status;
         if (status) {
             status.op = 'set';
@@ -1851,8 +1836,8 @@ class LRUCache {
                 status.value = v;
         }
         const result = this.#set(k, v, setOptions);
-        if (status && _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers) {
-            _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.publish(status);
+        if (status && metrics.hasSubscribers) {
+            metrics.publish(status);
         }
         return result;
     }
@@ -2047,15 +2032,15 @@ class LRUCache {
      * {@link LRUCache.OptionsBase.updateAgeOnHas} is set.
      */
     has(k, hasOptions = {}) {
-        const { status = _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers ? {} : undefined } = hasOptions;
+        const { status = metrics.hasSubscribers ? {} : undefined } = hasOptions;
         hasOptions.status = status;
         if (status) {
             status.op = 'has';
             status.key = k;
         }
         const result = this.#has(k, hasOptions);
-        if (_diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers)
-            _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.publish(status);
+        if (metrics.hasSubscribers)
+            metrics.publish(status);
         return result;
     }
     #has(k, hasOptions = {}) {
@@ -2102,8 +2087,8 @@ class LRUCache {
         }
         peekOptions.status = status;
         const result = this.#peek(k, peekOptions);
-        if (_diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers) {
-            _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.publish(status);
+        if (metrics.hasSubscribers) {
+            metrics.publish(status);
         }
         return result;
     }
@@ -2271,7 +2256,7 @@ class LRUCache {
             b.__abortController instanceof AbortController);
     }
     fetch(k, fetchOptions = {}) {
-        const ths = _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .tracing */ .z.hasSubscribers;
+        const ths = tracing.hasSubscribers;
         const { status = hasSubscribers() ? {} : undefined } = fetchOptions;
         fetchOptions.status = status;
         if (status && fetchOptions.context) {
@@ -2281,7 +2266,7 @@ class LRUCache {
         if (status && hasSubscribers()) {
             if (ths) {
                 status.trace = true;
-                _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .tracing */ .z.tracePromise(() => p, status).catch(() => { });
+                tracing.tracePromise(() => p, status).catch(() => { });
             }
         }
         return p;
@@ -2373,7 +2358,7 @@ class LRUCache {
         }
     }
     forceFetch(k, fetchOptions = {}) {
-        const ths = _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .tracing */ .z.hasSubscribers;
+        const ths = tracing.hasSubscribers;
         const { status = hasSubscribers() ? {} : undefined } = fetchOptions;
         fetchOptions.status = status;
         if (status && fetchOptions.context) {
@@ -2383,7 +2368,7 @@ class LRUCache {
         if (status && hasSubscribers()) {
             if (ths) {
                 status.trace = true;
-                _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .tracing */ .z.tracePromise(() => p, status).catch(() => { });
+                tracing.tracePromise(() => p, status).catch(() => { });
             }
         }
         return p;
@@ -2395,7 +2380,7 @@ class LRUCache {
         return v;
     }
     memo(k, memoOptions = {}) {
-        const { status = _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers ? {} : undefined } = memoOptions;
+        const { status = metrics.hasSubscribers ? {} : undefined } = memoOptions;
         memoOptions.status = status;
         if (status) {
             status.op = 'memo';
@@ -2407,8 +2392,8 @@ class LRUCache {
         const result = this.#memo(k, memoOptions);
         if (status)
             status.value = result;
-        if (_diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers)
-            _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.publish(status);
+        if (metrics.hasSubscribers)
+            metrics.publish(status);
         return result;
     }
     #memo(k, memoOptions = {}) {
@@ -2444,7 +2429,7 @@ class LRUCache {
      * If the key is not found, get() will return `undefined`.
      */
     get(k, getOptions = {}) {
-        const { status = _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers ? {} : undefined } = getOptions;
+        const { status = metrics.hasSubscribers ? {} : undefined } = getOptions;
         getOptions.status = status;
         if (status) {
             status.op = 'get';
@@ -2454,61 +2439,60 @@ class LRUCache {
         if (status) {
             if (result !== undefined)
                 status.value = result;
-            if (_diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers)
-                _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.publish(status);
+            if (metrics.hasSubscribers)
+                metrics.publish(status);
         }
         return result;
     }
     #get(k, getOptions = {}) {
         const { allowStale = this.allowStale, updateAgeOnGet = this.updateAgeOnGet, noDeleteOnStaleGet = this.noDeleteOnStaleGet, status, } = getOptions;
         const index = this.#keyMap.get(k);
-        if (index !== undefined) {
-            const value = this.#valList[index];
-            const fetching = this.#isBackgroundFetch(value);
+        if (index === undefined) {
             if (status)
-                this.#statusTTL(status, index);
-            if (this.#isStale(index)) {
+                status.get = 'miss';
+            return undefined;
+        }
+        const value = this.#valList[index];
+        const fetching = this.#isBackgroundFetch(value);
+        if (status)
+            this.#statusTTL(status, index);
+        if (this.#isStale(index)) {
+            // delete only if not an in-flight background fetch
+            if (!fetching) {
+                if (!noDeleteOnStaleGet) {
+                    this.#delete(k, 'expire');
+                }
                 if (status)
                     status.get = 'stale';
-                // delete only if not an in-flight background fetch
-                if (!fetching) {
-                    if (!noDeleteOnStaleGet) {
-                        this.#delete(k, 'expire');
-                    }
-                    if (status && allowStale)
+                if (allowStale) {
+                    if (status)
                         status.returnedStale = true;
-                    return allowStale ? value : undefined;
+                    return value;
                 }
-                else {
-                    if (status &&
-                        allowStale &&
-                        value.__staleWhileFetching !== undefined) {
-                        status.returnedStale = true;
-                    }
-                    return allowStale ? value.__staleWhileFetching : undefined;
-                }
+                return undefined;
             }
-            else {
+            if (status)
+                status.get = 'stale-fetching';
+            if (allowStale && value.__staleWhileFetching !== undefined) {
                 if (status)
-                    status.get = 'hit';
-                // if we're currently fetching it, we don't actually have it yet
-                // it's not stale, which means this isn't a staleWhileRefetching.
-                // If it's not stale, and fetching, AND has a __staleWhileFetching
-                // value, then that means the user fetched with {forceRefresh:true},
-                // so it's safe to return that value.
-                if (fetching) {
-                    return value.__staleWhileFetching;
-                }
-                this.#moveToTail(index);
-                if (updateAgeOnGet) {
-                    this.#updateItemAge(index);
-                }
-                return value;
+                    status.returnedStale = true;
+                return value.__staleWhileFetching;
             }
+            return undefined;
         }
-        else if (status) {
-            status.get = 'miss';
+        // not stale
+        if (status)
+            status.get = fetching ? 'fetching' : 'hit';
+        // if we're currently fetching it, we don't actually have it yet
+        // it's not stale, which means this isn't a staleWhileRefetching.
+        // If it's not stale, and fetching, AND has a __staleWhileFetching
+        // value, then that means the user fetched with {forceRefresh:true},
+        // so it's safe to return that value.
+        this.#moveToTail(index);
+        if (updateAgeOnGet) {
+            this.#updateItemAge(index);
         }
+        return fetching ? value.__staleWhileFetching : value;
     }
     #connect(p, n) {
         this.#prev[n] = p;
@@ -2543,8 +2527,8 @@ class LRUCache {
         return this.#delete(k, 'delete');
     }
     #delete(k, reason) {
-        if (_diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.hasSubscribers) {
-            _diagnostics_channel_js__WEBPACK_IMPORTED_MODULE_0__/* .metrics */ .q.publish({
+        if (metrics.hasSubscribers) {
+            metrics.publish({
                 op: 'delete',
                 delete: reason,
                 key: k,
@@ -2657,8 +2641,6 @@ class LRUCache {
     }
 }
 //# sourceMappingURL=index.js.map
-__webpack_async_result__();
-} catch(e) { __webpack_async_result__(e); } });
 
 /***/ }
 
