@@ -1,6 +1,5 @@
 import { join, resolve as pathResolve } from 'path';
 import { UserscriptPlugin } from 'webpack-userscript';
-import webpack from 'webpack';
 
 const __dirname = import.meta.dirname;
 
@@ -58,10 +57,6 @@ export default {
         usedExports: true
     },
     plugins: [
-        new webpack.NormalModuleReplacementPlugin(
-            /^node:diagnostics_channel$/,
-            join(__dirname, 'src', 'shims', 'diagnostics-channel.js')
-        ),
         new UserscriptPlugin({
             headers(original) {
                 return {
