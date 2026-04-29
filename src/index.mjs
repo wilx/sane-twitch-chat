@@ -205,7 +205,7 @@ class SaneTwitchChat {
 
     constructor (userName) {
         console.log(`Starting Sane Twitch Chat cleanup for user ${userName}`);
-        this.#userName = userName || '';
+        this.#userName = userName ?? '';
     }
 
     init () {
@@ -248,7 +248,7 @@ async function start () {
     saneTwitchChat.init();
 }
 
-if (GM?.info !== undefined) {
+if (globalThis.GM?.info !== undefined) {
     await start()
         .catch(e => console.error(`Error in start(): ${e}`))
         .then(() => console.log('Sane Twitch Chat started'));

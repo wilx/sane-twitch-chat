@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.606
+// @version     1.0.607
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -533,15 +533,14 @@ var Arrive = (function(window, $, undefined) {
 
 /***/ },
 
-/***/ 954
-(module, __webpack_exports__, __webpack_require__) {
+/***/ 402
+(__webpack_module__, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-__webpack_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
+__webpack_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 /* unused harmony exports start, SaneTwitchChat */
 /* harmony import */ var lru_cache_raw__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(758);
 /* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(588);
-/* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(arrive__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var js_cookie__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(987);
 
 
@@ -725,7 +724,7 @@ class SaneTwitchChat {
   }
   constructor(userName) {
     console.log(`Starting Sane Twitch Chat cleanup for user ${userName}`);
-    this.#userName = userName || '';
+    this.#userName = userName ?? '';
   }
   init() {
     this.#watchChatMessages();
@@ -768,7 +767,7 @@ async function start() {
   const saneTwitchChat = new SaneTwitchChat(userName);
   saneTwitchChat.init();
 }
-if (GM?.info !== undefined) {
+if (globalThis.GM?.info !== undefined) {
   await start().catch(e => console.error(`Error in start(): ${e}`)).then(() => console.log('Sane Twitch Chat started'));
 }
 
@@ -2732,18 +2731,6 @@ class LRUCache {
 /******/ 		};
 /******/ 	})();
 /******/ 	
-/******/ 	/* webpack/runtime/compat get default export */
-/******/ 	(() => {
-/******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__webpack_require__.n = (module) => {
-/******/ 			var getter = module && module.__esModule ?
-/******/ 				() => (module['default']) :
-/******/ 				() => (module);
-/******/ 			__webpack_require__.d(getter, { a: getter });
-/******/ 			return getter;
-/******/ 		};
-/******/ 	})();
-/******/ 	
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
 /******/ 		// define getter functions for harmony exports
@@ -2766,7 +2753,7 @@ class LRUCache {
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module used 'module' so it can't be inlined
-/******/ 	var __webpack_exports__ = __webpack_require__(954);
+/******/ 	var __webpack_exports__ = __webpack_require__(402);
 /******/ 	
 /******/ })()
 ;

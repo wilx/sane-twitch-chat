@@ -6,7 +6,7 @@ const __dirname = import.meta.dirname;
 export default {
     mode: 'production',
     entry: {
-        'sane-twitch-chat': join(__dirname, 'src', 'index.js')
+        'sane-twitch-chat': join(__dirname, 'src', 'index.mjs')
     },
     output: {
         path: pathResolve(__dirname, 'output'),
