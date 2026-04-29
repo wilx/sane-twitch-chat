@@ -1,6 +1,6 @@
 {
   "name": "sane-twitch-chat",
-  "version": "1.0.604",
+  "version": "1.0.606",
   "description": "Twitch chat sanitizer.",
   "license": "BSD-2-Clause",
   "homepage": "https://github.com/wilx/sane-twitch-chat",
@@ -61,5 +61,5 @@
     "audit-html": "yarn npm audit -R --environment production"
   },
   "babel": {},
-  "packageManager": "yarn@4.13.0"
+  "packageManager": "yarn@4.14.1"
 }
