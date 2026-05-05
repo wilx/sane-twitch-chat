@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.608
+// @version     1.0.609
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -539,7 +539,7 @@ var Arrive = (function(window, $, undefined) {
 "use strict";
 __webpack_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 /* unused harmony exports start, SaneTwitchChat */
-/* harmony import */ var lru_cache_raw__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(758);
+/* harmony import */ var lru_cache_raw__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(877);
 /* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(588);
 /* harmony import */ var js_cookie__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(987);
 
@@ -921,7 +921,7 @@ var api = init(defaultConverter, { path: '/' });
 
 /***/ },
 
-/***/ 758
+/***/ 877
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -935,18 +935,23 @@ __webpack_require__.d(__webpack_exports__, {
 const dummy = { hasSubscribers: false };
 const metrics = dummy;
 const tracing = dummy;
-//# sourceMappingURL=diagnostics-channel-browser.mjs.map
+//# sourceMappingURL=diagnostics-channel-browser.js.map
+;// ./node_modules/lru-cache/dist/esm/browser/perf.js
+const defaultPerf = (typeof performance === 'object' &&
+    performance &&
+    typeof performance.now === 'function') ?
+    /* c8 ignore start - this gets covered, but c8 gets confused */
+    performance
+    : /* c8 ignore stop */
+        Date;
+//# sourceMappingURL=perf.js.map
 ;// ./node_modules/lru-cache/dist/esm/browser/index.js
 /**
  * @module LRUCache
  */
 
+
 const hasSubscribers = () => metrics.hasSubscribers || tracing.hasSubscribers;
-const defaultPerf = (typeof performance === 'object' &&
-    performance &&
-    typeof performance.now === 'function') ?
-    performance
-    : Date;
 const warned = new Set();
 /* c8 ignore start */
 const PROCESS = (typeof process === 'object' && !!process ?
@@ -988,7 +993,9 @@ class ZeroArray extends Array {
     }
 }
 class Stack {
+    /* c8 ignore start - not sure why this is showing up uncovered?? */
     heap;
+    /* c8 ignore stop */
     length;
     // private constructor
     static #constructing = false;
@@ -2247,11 +2254,9 @@ class LRUCache {
             status.context = fetchOptions.context;
         }
         const p = this.#fetch(k, fetchOptions);
-        if (status && hasSubscribers()) {
-            if (ths) {
-                status.trace = true;
-                tracing.tracePromise(() => p, status).catch(() => { });
-            }
+        if (status && ths) {
+            status.trace = true;
+            tracing.tracePromise(() => p, status).catch(() => { });
         }
         return p;
     }
@@ -2349,11 +2354,9 @@ class LRUCache {
             status.context = fetchOptions.context;
         }
         const p = this.#forceFetch(k, fetchOptions);
-        if (status && hasSubscribers()) {
-            if (ths) {
-                status.trace = true;
-                tracing.tracePromise(() => p, status).catch(() => { });
-            }
+        if (status && ths) {
+            status.trace = true;
+            tracing.tracePromise(() => p, status).catch(() => { });
         }
         return p;
     }

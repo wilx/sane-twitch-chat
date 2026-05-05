@@ -1,6 +1,6 @@
 {
   "name": "sane-twitch-chat",
-  "version": "1.0.608",
+  "version": "1.0.609",
   "description": "Twitch chat sanitizer.",
   "license": "BSD-2-Clause",
   "homepage": "https://github.com/wilx/sane-twitch-chat",
@@ -23,13 +23,13 @@
     "arrive": "^2.5.3",
     "core-js": "^3.49.0",
     "js-cookie": "^3.0.5",
-    "lru-cache": "^11.3.5"
+    "lru-cache": "^11.3.6"
   },
   "devDependencies": {
     "@babel/cli": "^7.28.6",
     "@babel/core": "^7.29.0",
     "@babel/plugin-transform-runtime": "^7.29.0",
-    "@babel/preset-env": "^7.29.3",
+    "@babel/preset-env": "^7.29.5",
     "@eslint/js": "^10.0.1",
     "@types/arrive": "^2.4.4",
     "babel-helper-flip-expressions": "^0.4.3",
