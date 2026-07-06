@@ -1,4 +1,5 @@
 import { join, resolve as pathResolve } from 'path';
+import coreJsPackage from 'core-js/package.json' with { type: 'json' };
 import { UserscriptPlugin } from 'webpack-userscript';
 
 const __dirname = import.meta.dirname;
@@ -24,14 +25,14 @@ export default {
                             [
                                 '@babel/preset-env',
                                 {
-                                    debug: true,
                                     shippedProposals: true
                                 }
                             ]
                         ],
                         plugins: [
                             ['babel-plugin-polyfill-corejs3', {
-                                method: 'usage-global'
+                                method: 'usage-global',
+                                version: coreJsPackage.version
                             }],
                             '@babel/plugin-transform-runtime'
                         ]
