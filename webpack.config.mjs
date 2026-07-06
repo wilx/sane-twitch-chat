@@ -25,23 +25,15 @@ export default {
                                 '@babel/preset-env',
                                 {
                                     debug: true,
-                                    useBuiltIns: 'usage',
-                                    corejs: '3',
                                     shippedProposals: true
                                 }
                             ]
                         ],
                         plugins: [
-                            '@babel/plugin-transform-runtime',
-                            // 'babel-plugin-minify-constant-folding',
-                            'babel-plugin-minify-guarded-expressions',
-                            ['babel-plugin-transform-remove-undefined', {
-                                tdz: true
+                            ['babel-plugin-polyfill-corejs3', {
+                                method: 'usage-global'
                             }],
-                            'babel-plugin-transform-simplify-comparison-operators',
-                            ['babel-plugin-minify-dead-code-elimination', {
-                                tdz: true
-                            }]
+                            '@babel/plugin-transform-runtime'
                         ]
                     }
                 }

@@ -1,6 +1,6 @@
 {
   "name": "sane-twitch-chat",
-  "version": "1.0.614",
+  "version": "1.0.617",
   "description": "Twitch chat sanitizer.",
   "license": "BSD-2-Clause",
   "homepage": "https://github.com/wilx/sane-twitch-chat",
@@ -26,27 +26,21 @@
     "lru-cache": "^11.5.1"
   },
   "devDependencies": {
-    "@babel/cli": "^7.29.7",
-    "@babel/core": "^7.29.7",
-    "@babel/plugin-transform-runtime": "^7.29.7",
-    "@babel/preset-env": "^7.29.7",
+    "@babel/cli": "^8.0.1",
+    "@babel/core": "^8.0.1",
+    "@babel/plugin-transform-runtime": "^8.0.1",
+    "@babel/preset-env": "^8.0.2",
     "@eslint/js": "^10.0.1",
     "@types/arrive": "^2.4.4",
-    "babel-helper-flip-expressions": "^0.4.3",
     "babel-loader": "^10.1.1",
-    "babel-plugin-minify-constant-folding": "^0.5.0",
-    "babel-plugin-minify-dead-code-elimination": "^0.5.2",
-    "babel-plugin-minify-guarded-expressions": "^0.4.4",
-    "babel-plugin-transform-regexp-constructors": "^0.4.3",
-    "babel-plugin-transform-remove-undefined": "^0.5.0",
-    "babel-plugin-transform-simplify-comparison-operators": "^6.9.4",
-    "browserslist": "^4.28.2",
+    "babel-plugin-polyfill-corejs3": "^1.0.0",
+    "browserslist": "^4.28.4",
     "chokidar": "^5.0.0",
-    "eslint": "^10.5.0",
-    "globals": "^17.6.0",
+    "eslint": "^10.6.0",
+    "globals": "^17.7.0",
     "npm-audit-html": "^1.5.0",
-    "webpack": "^5.107.2",
-    "webpack-cli": "^7.0.3",
+    "webpack": "^5.108.4",
+    "webpack-cli": "^7.2.1",
     "webpack-userscript": "^3.2.3",
     "yarn-audit-html": "^7.3.2"
   },
@@ -61,5 +55,5 @@
     "audit-html": "yarn npm audit -R --environment production"
   },
   "babel": {},
-  "packageManager": "yarn@4.16.0"
+  "packageManager": "yarn@4.17.0"
 }
