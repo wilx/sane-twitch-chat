@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.619
+// @version     1.0.620
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
@@ -2979,17 +2979,17 @@ class LRUCache {
         this.#setItemTTL = (index, ttl, start = this.#perf.now()) => {
             starts[index] = ttl !== 0 ? start : 0;
             ttls[index] = ttl;
-            setPurgetTimer(index, ttl);
+            setPurgeTimer(index, ttl);
         };
         this.#updateItemAge = index => {
             starts[index] = ttls[index] !== 0 ? this.#perf.now() : 0;
-            setPurgetTimer(index, ttls[index]);
+            setPurgeTimer(index, ttls[index]);
         };
         // clear out the purge timer if we're setting TTL to 0, and
         // previously had a ttl purge timer running, so it doesn't
         // fire unnecessarily. Don't need to do this if we're not doing
         // autopurge.
-        const setPurgetTimer = !this.ttlAutopurge ?
+        const setPurgeTimer = !this.ttlAutopurge ?
             () => { }
             : (index, ttl) => {
                 if (purgeTimers?.[index]) {
@@ -3000,6 +3000,10 @@ class LRUCache {
                     const t = setTimeout(() => {
                         if (this.#isStale(index)) {
                             this.#delete(this.#keyList[index], 'expire');
+                            purgeTimers[index] = undefined;
+                        }
+                        else {
+                            setPurgeTimer(index, getRemainingTTL(index));
                         }
                     }, ttl + 1);
                     // unref() not supported on all platforms
@@ -3049,6 +3053,9 @@ class LRUCache {
             if (index === undefined) {
                 return 0;
             }
+            return getRemainingTTL(index);
+        };
+        const getRemainingTTL = (index) => {
             const ttl = ttls[index];
             const start = starts[index];
             if (!ttl || !start) {
@@ -4188,7 +4195,7 @@ class LRUCache {
             const index = this.#keyMap.get(k);
             if (index !== undefined) {
                 if (this.#autopurgeTimers?.[index]) {
-                    clearTimeout(this.#autopurgeTimers?.[index]);
+                    clearTimeout(this.#autopurgeTimers[index]);
                     this.#autopurgeTimers[index] = undefined;
                 }
                 deleted = true;
@@ -4322,10 +4329,9 @@ class LRUCache {
 /************************************************************************/
 /******/ 	/* webpack/runtime/async module */
 /******/ 	(() => {
-/******/ 		const hasSymbol = typeof Symbol === "function";
-/******/ 		const webpackQueues = hasSymbol ? Symbol("webpack queues") : "__webpack_queues__";
-/******/ 		const webpackExports = hasSymbol ? Symbol("webpack exports") : "__webpack_exports__";
-/******/ 		const webpackError = hasSymbol ? Symbol("webpack error") : "__webpack_error__";
+/******/ 		const webpackQueues = Symbol("webpack queues");
+/******/ 		const webpackExports = Symbol("webpack exports");
+/******/ 		const webpackError = Symbol("webpack error");
 /******/ 		
 /******/ 		const resolveQueue = (queue) => {
 /******/ 			if(queue?.d < 1) {
@@ -4386,11 +4392,12 @@ class LRUCache {
 /******/ 					fn = () => (resolve(getResult));
 /******/ 					fn.r = 0;
 /******/ 					const fnQueue = (q) => (q !== queue && !depQueues.has(q) && (depQueues.add(q), q && !q.d && (fn.r++, q.push(fn))));
-/******/ 					currentDeps.map((dep) => (dep[webpackQueues](fnQueue)));
+/******/ 					currentDeps.forEach((dep) => (dep[webpackQueues](fnQueue)));
 /******/ 				});
 /******/ 				return fn.r ? promise : getResult();
 /******/ 			}
 /******/ 			const done = (err) => ((err ? reject(promise[webpackError] = err) : outerResolve(exports)), resolveQueue(queue))
+/******/ 		
 /******/ 			body(handle, done);
 /******/ 			queue?.d < 0 && (queue.d = 0);
 /******/ 		};
