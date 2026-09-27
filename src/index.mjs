@@ -248,10 +248,13 @@ async function start () {
     saneTwitchChat.init();
 }
 
-if (globalThis.GM?.info !== undefined) {
+// FireMonkey exposes GM as a class binding, which is not a globalThis property.
+if (typeof GM !== 'undefined' && GM?.info !== undefined) {
     await start()
         .catch(e => console.error(`Error in start(): ${e}`))
         .then(() => console.log('Sane Twitch Chat started'));
+} else {
+    console.warn('Sane Twitch Chat startup skipped: GM.info is unavailable.');
 }
 
 export {
