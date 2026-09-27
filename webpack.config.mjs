@@ -63,7 +63,7 @@ export default {
                     updateURL: 'https://github.com/wilx/sane-twitch-chat/raw/master/output/index.user.js',
                     match: 'https://www.twitch.tv/*',
                     'run-at': 'document-end',
-                    grant: ['GM.cookie', 'GM.info']
+                    grant: ['GM.info']
                 };
             },
             pretty: true

@@ -68,6 +68,7 @@ const EMOTE_ANIMATION_STYLE = `
 class SaneTwitchChat {
     #userName = null;
     #prevMessage = null;
+    #processedMessages = new WeakMap();
 
     #fastChatCache = new LRUCache({
         max: FAST_CHAT_CACHE_SIZE,
@@ -101,6 +102,12 @@ class SaneTwitchChat {
         if (!combinedMessage) {
             return;
         }
+
+        // Nested chat containers can notify us about the same line more than once.
+        if (this.#processedMessages.get(msgNode) === combinedMessage) {
+            return;
+        }
+        this.#processedMessages.set(msgNode, combinedMessage);
 
         // Filter repeated messages.
         if (combinedMessage === this.#prevMessage) {
@@ -146,7 +153,8 @@ class SaneTwitchChat {
         }
     }
 
-    #dataAUserXpath = this.#evaluator.createExpression('.//span/@data-a-user');
+    // Twitch uses data-a-user; FrankerFaceZ puts data-user on the chat line.
+    #dataAUserXpath = this.#evaluator.createExpression('descendant-or-self::*/@data-a-user | @data-user');
 
     #chatLineXpath = this.#evaluator.createExpression('descendant::div[contains(@class,"chat-line__message--emote-button")]//span//img'
         + ' | descendant::a[contains(@class,"link-fragment")]'
@@ -160,7 +168,7 @@ class SaneTwitchChat {
                 const chatLineUserNodes = this.#dataAUserXpath.evaluate(
                     msgNode, XPathResult.ORDERED_NODE_ITERATOR_TYPE);
                 for (let node; (node = chatLineUserNodes.iterateNext());) {
-                    if (node?.textContent === this.#userName) {
+                    if (this.#userName && node.textContent.trim().toLowerCase() === this.#userName) {
                         // Do not hide any lines of the user.
                         return;
                     }
@@ -205,7 +213,7 @@ class SaneTwitchChat {
 
     constructor (userName) {
         console.log(`Starting Sane Twitch Chat cleanup for user ${userName}`);
-        this.#userName = userName ?? '';
+        this.#userName = (userName ?? '').trim().toLowerCase();
     }
 
     init () {
@@ -215,35 +223,18 @@ class SaneTwitchChat {
 };
 
 async function start () {
-    let cookies;
-    if (typeof GM !== 'undefined'
-        && typeof GM.cookie !== 'undefined') {
-        try {
-            cookies = await GM.cookie.list({ name: 'login' });
-            console.log('I have the cookie jar from GM.cookies');
-        } catch (e) {
-            if (e === 'not supported') {
-                // Some implementation might not support GM.cookie interface.
-                console.warn('GM.cookie not supported, falling back to document.cookie');
-            } else {
-                console.error(e);
-            }
-        }
-    }
+    let userName;
     try {
-        if (cookies === undefined) {
-            const name = Cookies.get('login');
-            if (name !== undefined) {
-                cookies = [{ value: name }];
-            }
-        }
-        if (cookies !== undefined) {
-            console.log('I have the cookie jar from Cookies.get');
+        userName = Cookies.get('login');
+        if (userName) {
+            console.log('Found login cookie using js-cookie');
         }
     } catch (e) {
         console.error(e);
     }
-    const userName = cookies?.[0]?.value;
+    if (!userName) {
+        console.warn('Sane Twitch Chat could not determine the logged-in user; own messages cannot be exempted.');
+    }
     const saneTwitchChat = new SaneTwitchChat(userName);
     saneTwitchChat.init();
 }

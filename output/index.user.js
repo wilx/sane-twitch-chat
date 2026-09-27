@@ -1,13 +1,12 @@
 // ==UserScript==
 // @name        sane-twitch-chat
 // @description Twitch chat sanitizer.
-// @version     1.0.625
+// @version     1.0.626
 // @author      wilx
 // @homepage    https://github.com/wilx/sane-twitch-chat
 // @supportURL  https://github.com/wilx/sane-twitch-chat/issues
 // @match       https://www.twitch.tv/*
 // @downloadURL https://github.com/wilx/sane-twitch-chat/raw/master/output/index.user.js
-// @grant       GM.cookie
 // @grant       GM.info
 // @namespace   https://github.com/wilx/sane-twitch-chat
 // @run-at      document-end
@@ -547,6 +546,42 @@ var $TypeError = TypeError;
 module.exports = function (argument) {
   if (isCallable(argument)) return argument;
   throw new $TypeError(tryToString(argument) + ' is not a function');
+};
+
+
+/***/ },
+
+/***/ 4328
+(module, __unused_webpack_exports, __webpack_require__) {
+
+"use strict";
+
+var WeakMapHelpers = __webpack_require__(4995);
+
+var weakmap = new WeakMapHelpers.WeakMap();
+var set = WeakMapHelpers.set;
+var remove = WeakMapHelpers.remove;
+
+module.exports = function (key) {
+  set(weakmap, key, 1);
+  remove(weakmap, key);
+  return key;
+};
+
+
+/***/ },
+
+/***/ 6557
+(module, __unused_webpack_exports, __webpack_require__) {
+
+"use strict";
+
+var has = (__webpack_require__(4995).has);
+
+// Perform ? RequireInternalSlot(M, [[WeakMapData]])
+module.exports = function (it) {
+  has(it);
+  return it;
 };
 
 
@@ -2083,6 +2118,28 @@ module.exports = isCallable(WeakMap) && /native code/.test(String(WeakMap));
 
 /***/ },
 
+/***/ 4995
+(module, __unused_webpack_exports, __webpack_require__) {
+
+"use strict";
+
+var uncurryThis = __webpack_require__(9504);
+
+// eslint-disable-next-line es/no-weak-map -- safe
+var WeakMapPrototype = WeakMap.prototype;
+
+module.exports = {
+  // eslint-disable-next-line es/no-weak-map -- safe
+  WeakMap: WeakMap,
+  set: uncurryThis(WeakMapPrototype.set),
+  get: uncurryThis(WeakMapPrototype.get),
+  has: uncurryThis(WeakMapPrototype.has),
+  remove: uncurryThis(WeakMapPrototype['delete'])
+};
+
+
+/***/ },
+
 /***/ 8227
 (module, __unused_webpack_exports, __webpack_require__) {
 
@@ -2160,6 +2217,76 @@ $({ target: 'Array', proto: true, arity: 1, forced: FORCED }, {
 
 /***/ },
 
+/***/ 9452
+(__unused_webpack_module, __unused_webpack_exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(6518);
+var aCallable = __webpack_require__(9306);
+var aWeakMap = __webpack_require__(6557);
+var aWeakKey = __webpack_require__(4328);
+var WeakMapHelpers = __webpack_require__(4995);
+var IS_PURE = __webpack_require__(6395);
+
+var get = WeakMapHelpers.get;
+var has = WeakMapHelpers.has;
+var set = WeakMapHelpers.set;
+
+var FORCED = IS_PURE || !function () {
+  try {
+    // eslint-disable-next-line es/no-weak-map, no-throw-literal -- testing
+    if (WeakMap.prototype.getOrInsertComputed) new WeakMap().getOrInsertComputed(1, function () { throw 1; });
+  } catch (error) {
+    // FF144 Nightly - Beta 3 bug
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1988369
+    return error instanceof TypeError;
+  }
+}();
+
+// `WeakMap.prototype.getOrInsertComputed` method
+// https://tc39.es/ecma262/#sec-weakmap.prototype.getorinsertcomputed
+$({ target: 'WeakMap', proto: true, real: true, forced: FORCED }, {
+  getOrInsertComputed: function getOrInsertComputed(key, callbackfn) {
+    if (!IS_PURE) aWeakMap(this);
+    aWeakKey(key);
+    aCallable(callbackfn);
+    if (has(this, key)) return get(this, key);
+    var value = callbackfn(key);
+    set(this, key, value);
+    return value;
+  }
+});
+
+
+/***/ },
+
+/***/ 8454
+(__unused_webpack_module, __unused_webpack_exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(6518);
+var WeakMapHelpers = __webpack_require__(4995);
+var IS_PURE = __webpack_require__(6395);
+
+var get = WeakMapHelpers.get;
+var has = WeakMapHelpers.has;
+var set = WeakMapHelpers.set;
+
+// `WeakMap.prototype.getOrInsert` method
+// https://tc39.es/ecma262/#sec-weakmap.prototype.getorinsert
+$({ target: 'WeakMap', proto: true, real: true, forced: IS_PURE }, {
+  getOrInsert: function getOrInsert(key, value) {
+    if (has(this, key)) return get(this, key);
+    set(this, key, value);
+    return value;
+  }
+});
+
+
+/***/ },
+
 /***/ 3402
 (__webpack_module__, __unused_webpack___webpack_exports__, __webpack_require__) {
 
@@ -2167,9 +2294,13 @@ $({ target: 'Array', proto: true, arity: 1, forced: FORCED }, {
 __webpack_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 /* unused harmony exports start, SaneTwitchChat */
 /* harmony import */ var core_js_modules_es_array_push_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(4114);
-/* harmony import */ var lru_cache_raw__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(2877);
-/* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(7588);
-/* harmony import */ var js_cookie__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(8987);
+/* harmony import */ var core_js_modules_es_weak_map_get_or_insert_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(8454);
+/* harmony import */ var core_js_modules_es_weak_map_get_or_insert_computed_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(9452);
+/* harmony import */ var lru_cache_raw__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(2877);
+/* harmony import */ var arrive__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(7588);
+/* harmony import */ var js_cookie__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(8987);
+
+
 
 
 
@@ -2237,13 +2368,14 @@ const EMOTE_ANIMATION_STYLE = `
 class SaneTwitchChat {
   #userName = null;
   #prevMessage = null;
-  #fastChatCache = new lru_cache_raw__WEBPACK_IMPORTED_MODULE_1__/* .LRUCache */ .q({
+  #processedMessages = new WeakMap();
+  #fastChatCache = new lru_cache_raw__WEBPACK_IMPORTED_MODULE_3__/* .LRUCache */ .q({
     max: FAST_CHAT_CACHE_SIZE,
     ttl: FAST_CHAT_CACHE_TIMEOUT,
     updateAgeOnGet: true,
     ttlResolution: 100
   });
-  #longChatCache = new lru_cache_raw__WEBPACK_IMPORTED_MODULE_1__/* .LRUCache */ .q({
+  #longChatCache = new lru_cache_raw__WEBPACK_IMPORTED_MODULE_3__/* .LRUCache */ .q({
     max: LONG_CHAT_CACHE_SIZE,
     ttl: LONG_CHAT_CACHE_TIMEOUT,
     updateAgeOnGet: true,
@@ -2263,6 +2395,12 @@ class SaneTwitchChat {
     if (!combinedMessage) {
       return;
     }
+
+    // Nested chat containers can notify us about the same line more than once.
+    if (this.#processedMessages.get(msgNode) === combinedMessage) {
+      return;
+    }
+    this.#processedMessages.set(msgNode, combinedMessage);
 
     // Filter repeated messages.
     if (combinedMessage === this.#prevMessage) {
@@ -2305,7 +2443,9 @@ class SaneTwitchChat {
       }
     }
   }
-  #dataAUserXpath = this.#evaluator.createExpression('.//span/@data-a-user');
+
+  // Twitch uses data-a-user; FrankerFaceZ puts data-user on the chat line.
+  #dataAUserXpath = this.#evaluator.createExpression('descendant-or-self::*/@data-a-user | @data-user');
   #chatLineXpath = this.#evaluator.createExpression('descendant::div[contains(@class,"chat-line__message--emote-button")]//span//img' + ' | descendant::a[contains(@class,"link-fragment")]' + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]//div[contains(@class,"bttv-emote")]/img' + ' | descendant::span[contains(@class,"text-fragment") or contains(@class,"mention-fragment")]');
   #watchChatMessages() {
     document.arrive(CHAT_SEL, chatNode => {
@@ -2313,7 +2453,7 @@ class SaneTwitchChat {
       chatNode.arrive(CHAT_LINE_SEL, msgNode => {
         const chatLineUserNodes = this.#dataAUserXpath.evaluate(msgNode, XPathResult.ORDERED_NODE_ITERATOR_TYPE);
         for (let node; node = chatLineUserNodes.iterateNext();) {
-          if (node?.textContent === this.#userName) {
+          if (this.#userName && node.textContent.trim().toLowerCase() === this.#userName) {
             // Do not hide any lines of the user.
             return;
           }
@@ -2353,7 +2493,7 @@ class SaneTwitchChat {
   }
   constructor(userName) {
     console.log(`Starting Sane Twitch Chat cleanup for user ${userName}`);
-    this.#userName = userName ?? '';
+    this.#userName = (userName ?? '').trim().toLowerCase();
   }
   init() {
     this.#watchChatMessages();
@@ -2362,38 +2502,18 @@ class SaneTwitchChat {
 }
 ;
 async function start() {
-  let cookies;
-  if (typeof GM !== 'undefined' && typeof GM.cookie !== 'undefined') {
-    try {
-      cookies = await GM.cookie.list({
-        name: 'login'
-      });
-      console.log('I have the cookie jar from GM.cookies');
-    } catch (e) {
-      if (e === 'not supported') {
-        // Some implementation might not support GM.cookie interface.
-        console.warn('GM.cookie not supported, falling back to document.cookie');
-      } else {
-        console.error(e);
-      }
-    }
-  }
+  let userName;
   try {
-    if (cookies === undefined) {
-      const name = js_cookie__WEBPACK_IMPORTED_MODULE_3__/* ["default"] */ .A.get('login');
-      if (name !== undefined) {
-        cookies = [{
-          value: name
-        }];
-      }
-    }
-    if (cookies !== undefined) {
-      console.log('I have the cookie jar from Cookies.get');
+    userName = js_cookie__WEBPACK_IMPORTED_MODULE_5__/* ["default"] */ .A.get('login');
+    if (userName) {
+      console.log('Found login cookie using js-cookie');
     }
   } catch (e) {
     console.error(e);
   }
-  const userName = cookies?.[0]?.value;
+  if (!userName) {
+    console.warn('Sane Twitch Chat could not determine the logged-in user; own messages cannot be exempted.');
+  }
   const saneTwitchChat = new SaneTwitchChat(userName);
   saneTwitchChat.init();
 }
